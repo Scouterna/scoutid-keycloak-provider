@@ -19,7 +19,7 @@ This repo contains a Docker Compose project to quickly spin up a local Keycloak
 instance. Make sure you've got Docker installed.
 
 ```bash
-# Generate certificates to run Keycloak in HTTPS mode
+# Generate certificates to run Keycloak in HTTPS mode. You should only need to do this once.
 ./generate-certs.sh
 
 # Start Keycloak
