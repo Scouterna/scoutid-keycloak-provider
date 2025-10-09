@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - main
+      - mainx # Temporarily disabled
 
 jobs:
   build:
@@ -22,6 +22,7 @@ jobs:
           java-version: "21"
           distribution: "temurin"
           cache: maven
+
       - name: Publish package
         run: mvn --batch-mode deploy
         env:
