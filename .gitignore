@@ -1,3 +1,6 @@
 # Development certificates
 certs/
 *.class
+*.jar
+*.lst
+pom.properties
