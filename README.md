@@ -33,8 +33,9 @@ docker compose down
 ```
 
 ## Compiling the provider package
-run 'mvn clean package'
+run `mvn clean package`
+
 Add this package to the providers/ directory of the Keycloak server and restart it
 
 ## Testing scoutnet authentication
-Run src/test/java/org/scouterna/keycloak/client/ScoutnetClientIT.java with your choice of debugger. Change to your password and username so scoutnet can provide a valid response.
+Run `src/test/java/org/scouterna/keycloak/client/ScoutnetClientIT.java` with your choice of debugger. Change to your password and username so scoutnet can provide a valid response.
