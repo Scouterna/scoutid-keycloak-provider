@@ -9,6 +9,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
 
@@ -18,18 +22,11 @@ jobs:
           java-version: "21"
           distribution: "temurin"
           cache: maven
-
-      - name: Build with Maven
-        run: mvn -B package --file pom.xml
+      - name: Publish package
+        run: mvn --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
       - name: Update dependency graph
         uses: advanced-security/maven-dependency-submission-action@b275d12641ac2d2108b2cbb7598b154ad2f2cee8
-
-      - name: Release
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: qcastel/github-actions-maven-release@70725f21eb1049fbf049470e72efbcd5d1528f35
-        env:
-          JAVA_HOME: /usr/lib/jvm/java-21-temurin/
-        with:
-          release-branch-name: main
