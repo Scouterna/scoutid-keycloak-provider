@@ -33,9 +33,32 @@ docker compose down
 ```
 
 ## Compiling the provider package
-run `mvn clean package`
+run `./mvnw clean package`
 
-Add this package to the providers/ directory of the Keycloak server and restart it
+Add the jar-file produced in `target/` to the `providers/` directory of the
+Keycloak server and restart it
 
 ## Testing scoutnet authentication
-Run `src/test/java/org/scouterna/keycloak/client/ScoutnetClientIT.java` with your choice of debugger. Change to your password and username so scoutnet can provide a valid response.
+Run `src/test/java/org/scouterna/keycloak/client/ScoutnetClientIT.java` with
+your choice of debugger. Change to your password and username so Scoutnet can
+provide a valid response.
+
+## Commits and releases
+
+This repository uses
+[release-please](https://github.com/googleapis/release-please) to manage
+releases and all commits must therefore follow the [Conventional
+Commits](https://www.conventionalcommits.org/) format.
+
+Every commit pushed to the `main` branch will inspected by release-please.
+Commits that cause a version bump will cause release-please to create or update
+an existing release pull request. Merging this pull request will trigger a
+release.
+
+Immediately after a release is created, release-please will create a SNAPSHOT
+pull request. We've configured a workflow to automatically merge this since our
+main branch is also our development branch.
+
+Once a release is created a workflow will automatically build the project and
+publish the resulting jar to the GitHub Packages Maven registry and also add it
+to the release assets.
