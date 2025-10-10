@@ -27,13 +27,6 @@
 		</license>
 	</licenses>
 
-    <!-- <scm>
-        <connection>scm:git:${project.scm.url}</connection>
-        <developerConnection>scm:git:${project.scm.url}</developerConnection>
-        <url>https://github.com/Scouterna/scoutid-keycloak-provider.git</url>
-        <tag>HEAD</tag>
-    </scm> -->
-
     <distributionManagement>
         <repository>
         <id>github</id>
