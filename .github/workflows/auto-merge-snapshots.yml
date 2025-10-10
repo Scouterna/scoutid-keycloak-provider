@@ -15,6 +15,6 @@ jobs:
 
       - name: Enable Pull Request Automerge
         run: |
-          gh pr merge ${{ github.event.pull_request.url }} --squash --auto
+          gh pr merge ${{ github.event.pull_request.number }} --squash --auto
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
