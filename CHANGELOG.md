@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.1.0...v0.1.1) (2025-10-10)
+
+
+### Bug Fixes
+
+* dummy commit ([0418078](https://github.com/Scouterna/scoutid-keycloak-provider/commit/0418078635fbb2b68d3108b3c217e9073be7ca21))
+
 ## 0.1.0 (2025-10-10)
 
 
