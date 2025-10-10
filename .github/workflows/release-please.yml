@@ -16,5 +16,5 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@e5c2aa4f6acd6194e00632c8f262cff67ae17873
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           release-type: maven
