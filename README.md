@@ -38,10 +38,13 @@ run `./mvnw clean package`
 Add the jar-file produced in `target/` to the `providers/` directory of the
 Keycloak server and restart it
 
-## Testing scoutnet authentication
-Run `src/test/java/org/scouterna/keycloak/client/ScoutnetClientIT.java` with
-your choice of debugger. Change to your password and username so Scoutnet can
-provide a valid response.
+## Using the scoutnet based custom authentication
+1. Login to your development keycloak instance using credentials admin:admin
+2. Go to Authentication, make a duplicate of the browser flow name with name and description "ScoutID browser login"
+3. Remove Kerberos, Identity Provider Redirector and Scoutid browser login forms
+4. Add execution and choose Scoutnet Password Authenticator. Set it to required
+5. Choose action -> Bind flow and bind it to the Browser flow. Now it's the new default login method
+6. Go to Clients -> security-admin-console -> Advanced -> Authentication flow overrides and set Browser Flow to browser. Save. Otherwise it will now be impossible to login to the keycloak admin interface.
 
 ## Commits and releases
 
