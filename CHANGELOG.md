@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.1.2...v0.2.0) (2025-10-11)
+
+
+### Features
+
+* dummy commit ([b0cc3a6](https://github.com/Scouterna/scoutid-keycloak-provider/commit/b0cc3a6a45aba9dede0c46eed8be59ddf93b9ba2))
+* login form works ([2e4b597](https://github.com/Scouterna/scoutid-keycloak-provider/commit/2e4b59750c8ca66d370ee34a281c96c5d383501e))
+
+
+### Bug Fixes
+
+* dummy commit ([901f3bf](https://github.com/Scouterna/scoutid-keycloak-provider/commit/901f3bf5aceeee3bbe17c23d1f0eaee5a51d1d7a))
+* version error and setup in README ([3d588f2](https://github.com/Scouterna/scoutid-keycloak-provider/commit/3d588f2ec162fe826583c0d43479f7c633cb8ac2))
+
+
+### Documentation
+
+* add section on release-please and commit format ([17854bf](https://github.com/Scouterna/scoutid-keycloak-provider/commit/17854bfddd53ee1c578cce3605ff32a51ccca675))
+
 ## [0.1.2](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.1.1...v0.1.2) (2025-10-10)
 
 
