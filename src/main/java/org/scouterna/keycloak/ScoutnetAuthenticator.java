@@ -87,6 +87,7 @@ public class ScoutnetAuthenticator implements Authenticator {
         updateUserFromProfile(user, profile);
 
         context.setUser(user);
+        context.getAuthenticationSession().removeAuthNote("username");
         context.success();
     }
 
