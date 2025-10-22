@@ -141,7 +141,7 @@ public class ScoutnetAuthenticator implements Authenticator {
     private void failAuthentication(AuthenticationFlowContext context, String username, String error) {
         context.getEvent().user(username).error("invalid_grant");
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS,
-            context.form().setError(error).createLoginPassword());
+            context.form().setError(error).createLoginUsernamePassword());
     }
 
     // --- Boilerplate methods unchanged ---
