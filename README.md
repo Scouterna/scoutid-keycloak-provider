@@ -46,6 +46,14 @@ Keycloak server and restart it
 5. Choose action -> Bind flow and bind it to the Browser flow. Now it's the new default login method
 6. Go to Clients -> security-admin-console -> Advanced -> Authentication flow overrides and set Browser Flow to browser. Save. Otherwise it will now be impossible to login to the keycloak admin interface.
 
+You can now verify login using this test interface
+http://localhost:8080/realms/master/account
+
+In order to see our custom fields, you need to make them visible, and also include them in oidc response.
+1. Go to Realm settings -> User profile -> JSON editor and replace the json with the content of config_support/user_profile.json
+2. In order to include a field into a oidc response, enter Client scopes -> profile -> Mappers -> birthdate and set user attribute to scoutnet_dob
+3. Repeat for the other fields as well.
+
 ## Commits and releases
 
 This repository uses

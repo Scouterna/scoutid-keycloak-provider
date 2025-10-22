@@ -1,0 +1,225 @@
+{
+  "attributes": [
+    {
+      "name": "username",
+      "displayName": "${username}",
+      "validations": {
+        "length": {
+          "min": 3,
+          "max": 255
+        },
+        "username-prohibited-characters": {},
+        "up-username-not-idn-homograph": {}
+      },
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin",
+          "user"
+        ]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "email",
+      "displayName": "${email}",
+      "validations": {
+        "email": {},
+        "length": {
+          "max": 255
+        }
+      },
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin",
+          "user"
+        ]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "firstName",
+      "displayName": "${firstName}",
+      "validations": {
+        "length": {
+          "max": 255
+        },
+        "person-name-prohibited-characters": {}
+      },
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin",
+          "user"
+        ]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "lastName",
+      "displayName": "${lastName}",
+      "validations": {
+        "length": {
+          "max": 255
+        },
+        "person-name-prohibited-characters": {}
+      },
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin",
+          "user"
+        ]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "scoutnet_dob",
+      "displayName": "Date of birth",
+      "validations": {},
+      "annotations": {},
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "scoutnet_member_no",
+      "displayName": "Medlemsnummer",
+      "validations": {},
+      "annotations": {},
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "street_address",
+      "displayName": "Street address",
+      "validations": {},
+      "annotations": {},
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "postal_code",
+      "displayName": "Postal code",
+      "validations": {},
+      "annotations": {},
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "locality",
+      "displayName": "Locality",
+      "validations": {},
+      "annotations": {},
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "country",
+      "displayName": "Country",
+      "validations": {},
+      "annotations": {},
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "scoutnet_primary_group_name",
+      "displayName": "Primär scoutkår",
+      "validations": {},
+      "annotations": {},
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "scoutnet_primary_group_no",
+      "displayName": "Primär scoutkår - ID",
+      "validations": {},
+      "annotations": {},
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
+    }
+  ],
+  "groups": [
+    {
+      "name": "user-metadata",
+      "displayHeader": "User metadata",
+      "displayDescription": "Attributes, which refer to user metadata"
+    }
+  ]
+}
