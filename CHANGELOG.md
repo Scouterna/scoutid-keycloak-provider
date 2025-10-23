@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.2.0...v0.3.0) (2025-10-23)
+
+
+### Features
+
+* added profile fetch and sync into keycloak ([dfcec2a](https://github.com/Scouterna/scoutid-keycloak-provider/commit/dfcec2a485660d8400d2ed7ca6e957408402f8ad))
+
 ## [0.2.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.1.2...v0.2.0) (2025-10-11)
 
 
