@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.3.0...v0.3.1) (2025-10-28)
+
+
+### Bug Fixes
+
+* broker_user_id added, address data removed ([dbe77c1](https://github.com/Scouterna/scoutid-keycloak-provider/commit/dbe77c18200cc006689d92244febdd1fbd174857))
+
 ## [0.3.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.2.0...v0.3.0) (2025-10-23)
 
 
