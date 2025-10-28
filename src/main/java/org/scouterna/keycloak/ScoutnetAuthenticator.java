@@ -102,23 +102,24 @@ public class ScoutnetAuthenticator implements Authenticator {
         user.setEmail(profile.getEmail());
 
         // --- Store extra data as custom attributes ---
+        user.setSingleAttribute("broker_user_id", String.valueOf(profile.getMemberNo()));
         user.setSingleAttribute("scoutnet_member_no", String.valueOf(profile.getMemberNo()));
-        user.setSingleAttribute("scoutnet_dob", profile.getDob());
+        // user.setSingleAttribute("scoutnet_dob", profile.getDob());
         // user.setSingleAttribute("scouternet_sex", profile.getSex());
 
         // --- Process and store primary address ---
-        if (profile.getAddresses() != null) {
-            profile.getAddresses().values().stream()
-                .filter(Address::isPrimary)
-                .findFirst()
-                .ifPresent(primaryAddress -> {
-                    // Map to standard OIDC address claim names for better compatibility
-                    user.setSingleAttribute("street_address", primaryAddress.getAddressLine1());
-                    user.setSingleAttribute("postal_code", primaryAddress.getZipCode());
-                    user.setSingleAttribute("locality", primaryAddress.getCity()); // OIDC term for city
-                    user.setSingleAttribute("country", primaryAddress.getCountryCode());
-                });
-        }
+        // if (profile.getAddresses() != null) {
+        //     profile.getAddresses().values().stream()
+        //         .filter(Address::isPrimary)
+        //         .findFirst()
+        //         .ifPresent(primaryAddress -> {
+        //             // Map to standard OIDC address claim names for better compatibility
+        //             user.setSingleAttribute("street_address", primaryAddress.getAddressLine1());
+        //             user.setSingleAttribute("postal_code", primaryAddress.getZipCode());
+        //             user.setSingleAttribute("locality", primaryAddress.getCity()); // OIDC term for city
+        //             user.setSingleAttribute("country", primaryAddress.getCountryCode());
+        //         });
+        // }
 
         // --- Process and store primary group membership ---
         if (profile.getMemberships() != null && profile.getMemberships().getGroup() != null) {
