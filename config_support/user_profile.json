@@ -32,6 +32,11 @@
           "max": 255
         }
       },
+      "required": {
+        "roles": [
+          "user"
+        ]
+      },
       "permissions": {
         "view": [
           "admin",
@@ -53,6 +58,11 @@
         },
         "person-name-prohibited-characters": {}
       },
+      "required": {
+        "roles": [
+          "user"
+        ]
+      },
       "permissions": {
         "view": [
           "admin",
@@ -73,6 +83,11 @@
           "max": 255
         },
         "person-name-prohibited-characters": {}
+      },
+      "required": {
+        "roles": [
+          "user"
+        ]
       },
       "permissions": {
         "view": [
@@ -105,70 +120,6 @@
     {
       "name": "scoutnet_member_no",
       "displayName": "Medlemsnummer",
-      "validations": {},
-      "annotations": {},
-      "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
-      },
-      "multivalued": false
-    },
-    {
-      "name": "street_address",
-      "displayName": "Street address",
-      "validations": {},
-      "annotations": {},
-      "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
-      },
-      "multivalued": false
-    },
-    {
-      "name": "postal_code",
-      "displayName": "Postal code",
-      "validations": {},
-      "annotations": {},
-      "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
-      },
-      "multivalued": false
-    },
-    {
-      "name": "locality",
-      "displayName": "Locality",
-      "validations": {},
-      "annotations": {},
-      "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
-      },
-      "multivalued": false
-    },
-    {
-      "name": "country",
-      "displayName": "Country",
       "validations": {},
       "annotations": {},
       "permissions": {
