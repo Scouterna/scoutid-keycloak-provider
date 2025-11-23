@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.2](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.3.1...v0.3.2) (2025-11-23)
+
+
+### Bug Fixes
+
+* reduce user data usage ([c8741f2](https://github.com/Scouterna/scoutid-keycloak-provider/commit/c8741f285c472c1778e01a44bf1e7b78d9ac08ea))
+* version bump to 26.4.5 ([d47bbdb](https://github.com/Scouterna/scoutid-keycloak-provider/commit/d47bbdb1b4f343ec6ec2a9ebc8a9f8a1d051db7e))
+
+
+### Documentation
+
+* add process for member_no as sub ([37acf3b](https://github.com/Scouterna/scoutid-keycloak-provider/commit/37acf3b2051473b02e90a88593f9c6808d63df58))
+
 ## [0.3.1](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.3.0...v0.3.1) (2025-10-28)
 
 
