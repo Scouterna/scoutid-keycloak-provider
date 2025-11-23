@@ -54,6 +54,25 @@ In order to see our custom fields, you need to make them visible, and also inclu
 2. In order to include a field into a oidc response, enter Client scopes -> profile -> Mappers -> birthdate and set user attribute to scoutnet_dob
 3. Repeat for the other fields as well.
 
+### Using scoutid as sub
+For some client applications, a known sub is needed to prepopulate members before they are created by keycloak, or for compitability with other login methods. The sub is the unique user id used by OIDC, by default created when a user is initialised in keycloak. Note that using scoutnet member number as sub can cause problems when using a combined login method (upcoming feature). If you want to use the scoutnet member id as sub:
+1. Create the client
+2. Under client scopes enter [client_name]-dedicated to change client specific default scope
+3. Add mapper -> By configuration -> User attribute
+4. Set as below:
+Mapper type: User Attribute
+Name: sub member_no mapper
+User Attribute: scoutnet_member_no
+Token Claim Name: sub
+Claim JSON Type: String
+Add to ID token: On
+Add to access token: On
+Add to lightweight access token: On
+Add to userinfo: On
+Add to token introspection: On
+Multivalued: Off
+Aggregate attribute values: Off
+
 ## Commits and releases
 
 This repository uses
