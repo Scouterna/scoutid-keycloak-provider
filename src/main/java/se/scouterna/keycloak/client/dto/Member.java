@@ -1,4 +1,4 @@
-package org.scouterna.keycloak.client.dto;
+package se.scouterna.keycloak.client.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
