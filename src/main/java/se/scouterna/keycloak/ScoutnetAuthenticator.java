@@ -1,4 +1,4 @@
-package org.scouterna.keycloak;
+package se.scouterna.keycloak;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 import org.jboss.logging.Logger;
@@ -9,8 +9,8 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.KeycloakModelUtils;
-import org.scouterna.keycloak.client.ScoutnetClient;
-import org.scouterna.keycloak.client.dto.*; // Added rich profile DTOs
+import se.scouterna.keycloak.client.ScoutnetClient;
+import se.scouterna.keycloak.client.dto.*; // Added rich profile DTOs
 
 /**
  * Keycloak Authenticator that validates credentials against an external Scoutnet API.

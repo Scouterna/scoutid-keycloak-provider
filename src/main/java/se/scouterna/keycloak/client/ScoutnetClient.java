@@ -1,4 +1,4 @@
-package org.scouterna.keycloak.client;
+package se.scouterna.keycloak.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -9,8 +9,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.jboss.logging.Logger;
-import org.scouterna.keycloak.client.dto.AuthResponse;
-import org.scouterna.keycloak.client.dto.Profile;
+import se.scouterna.keycloak.client.dto.AuthResponse;
+import se.scouterna.keycloak.client.dto.Profile;
 
 import java.io.IOException;
 import java.util.HashMap;

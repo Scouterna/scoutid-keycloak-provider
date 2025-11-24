@@ -1,9 +1,9 @@
-package org.scouterna.keycloak.client;
+package se.scouterna.keycloak.client;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.scouterna.keycloak.client.dto.AuthResponse;
-import org.scouterna.keycloak.client.dto.Profile;
+import se.scouterna.keycloak.client.dto.AuthResponse;
+import se.scouterna.keycloak.client.dto.Profile;
 
 import static org.junit.jupiter.api.Assertions.*;
 
