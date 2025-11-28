@@ -1,4 +1,4 @@
-package org.scouterna.keycloak;
+package se.scouterna.keycloak;
 
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.authentication.AuthenticatorFactory;
