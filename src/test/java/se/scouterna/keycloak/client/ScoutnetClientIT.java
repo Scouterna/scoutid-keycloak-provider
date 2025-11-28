@@ -35,8 +35,6 @@ public class ScoutnetClientIT {
     @Test
     void testFullAuthenticationAndProfileFetch() {
         if (username == null || password == null) {
-            // Re-check here to formally skip the test in the runner
-            // Using JUnit 5's Assumptions would be another way to do this.
             return; 
         }
 
@@ -60,11 +58,33 @@ public class ScoutnetClientIT {
         assertNotNull(profile.getMemberships(), "Profile should contain memberships");
 
         System.out.println("Profile fetch successful for: " + profile.getFirstName() + " " + profile.getLastName());
+
+        assertEquals(authResponse.getMember().getMemberNo(), profile.getMemberNo());
+
+        System.out.println("Profile fetch successful for: " + profile.getFirstName());
+
+        // Step 3: Fetch Profile Image
+        byte[] imageBytes = scoutnetClient.getProfileImage(authResponse.getToken());
+        
+        if (imageBytes != null) {
+            System.out.println("Compressed Image size: " + imageBytes.length + " bytes.");
+            
+            // Validation: The image should be reasonably small due to resizing (e.g., < 100KB)
+            // A 128x128 JPG is usually around 2KB - 10KB.
+            assertTrue(imageBytes.length > 0, "Image bytes should not be empty");
+            assertTrue(imageBytes.length < 100_000, "Image should be compressed/resized to a reasonable size for a token claim");
+            
+            // Check magic numbers for JPEG (FF D8)
+            assertEquals((byte) 0xFF, imageBytes[0], "Should be JPEG format");
+            assertEquals((byte) 0xD8, imageBytes[1], "Should be JPEG format");
+        } else {
+            System.out.println("User has no profile image.");
+        }
     }
 
     @Test
     void testFailedAuthentication() {
-        AuthResponse response = scoutnetClient.authenticate("invalid-username-12345", "this-is-a-bad-password");
+        AuthResponse response = scoutnetClient.authenticate("invalid-username", "bad-password");
         assertNull(response, "Authentication with invalid credentials should return null");
     }
 }
