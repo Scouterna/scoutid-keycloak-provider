@@ -11,6 +11,7 @@ import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import se.scouterna.keycloak.client.ScoutnetClient;
 import se.scouterna.keycloak.client.dto.*; // Added rich profile DTOs
+import java.util.Base64;
 
 /**
  * Keycloak Authenticator that validates credentials against an external Scoutnet API.
@@ -42,7 +43,6 @@ public class ScoutnetAuthenticator implements Authenticator {
     /**
      * This method is called ONLY after the user has submitted the form.
      * Contains the full authentication and user creation/update logic.
-     * (Refactored logic from the user_creation branch into the correct 'action' method)
      */
     @Override
     public void action(AuthenticationFlowContext context) {
@@ -71,6 +71,9 @@ public class ScoutnetAuthenticator implements Authenticator {
             return;
         }
 
+        // Step 2b: Fetch profile image (non-blocking failure - if image fails, we still proceed)
+        byte[] profileImage = scoutnetClient.getProfileImage(authResponse.getToken());
+
         // Step 3: Find or create the Keycloak user
         String keycloakUsername = "scoutnet-" + profile.getMemberNo();
         UserModel user = KeycloakModelUtils.findUserByNameOrEmail(context.getSession(), context.getRealm(), keycloakUsername);
@@ -84,28 +87,33 @@ public class ScoutnetAuthenticator implements Authenticator {
         }
 
         // Step 4: Update the user with the rich profile data
-        updateUserFromProfile(user, profile);
+        updateUserFromProfile(user, profile, profileImage);
 
         context.setUser(user);
         context.getAuthenticationSession().removeAuthNote("username");
         context.success();
     }
 
-    /**
-     * Populates the Keycloak UserModel with rich data from the Scoutnet Profile.
-     * (Helper method imported from the user_creation branch)
-     */
-    private void updateUserFromProfile(UserModel user, Profile profile) {
+    private void updateUserFromProfile(UserModel user, Profile profile, byte[] imageBytes) {
         // --- Basic Info ---
         user.setFirstName(profile.getFirstName());
         user.setLastName(profile.getLastName());
         user.setEmail(profile.getEmail());
 
-        // --- Store extra data as custom attributes ---
+        // --- Custom Attributes ---
         user.setSingleAttribute("scoutnet_member_no", String.valueOf(profile.getMemberNo()));
         user.setSingleAttribute("scoutnet_dob", profile.getDob());
 
-        // --- Process and store primary group membership ---
+        // --- OIDC Picture ---
+        if (imageBytes != null && imageBytes.length > 0) {
+            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+            // We use the standard OIDC attribute name "picture".
+            // We prepend the data URI scheme so clients use it directly as <img src="...">
+            // We forced the format to JPEG in the client.
+            user.setSingleAttribute("picture", "data:image/jpeg;base64," + base64Image);
+        }
+
+        // --- Memberships ---
         if (profile.getMemberships() != null && profile.getMemberships().getGroup() != null) {
             profile.getMemberships().getGroup().values().stream()
                 .filter(GroupMembership::isPrimary)
