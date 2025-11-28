@@ -5,6 +5,7 @@ import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
+import org.keycloak.events.Details;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
@@ -35,8 +36,8 @@ public class ScoutnetAuthenticator implements Authenticator {
     @Override
     public void authenticate(AuthenticationFlowContext context) {
         log.info("Displaying login form for Scoutnet authentication.");
-        // This will render the standard login.ftl template
-        context.challenge(context.form().createLoginUsernamePassword());
+        // This will render the scoutid login.ftl template
+        context.challenge(context.form().createForm("scoutid-login.ftl"));
     }
 
     /**
@@ -50,6 +51,14 @@ public class ScoutnetAuthenticator implements Authenticator {
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         String username = formData.getFirst("username");
         String password = formData.getFirst("password");
+
+        // Handle Remember Me
+        String rememberMe = formData.getFirst("rememberMe");
+        boolean remember = rememberMe != null && rememberMe.equalsIgnoreCase("on");
+        if (remember) {
+            context.getAuthenticationSession().setAuthNote(Details.REMEMBER_ME, "true");
+            context.getEvent().detail(Details.REMEMBER_ME, "true");
+        }
 
         // Basic validation
         if (username == null || username.trim().isEmpty() || password == null || password.isEmpty()) {
@@ -127,7 +136,7 @@ public class ScoutnetAuthenticator implements Authenticator {
     private void failAuthentication(AuthenticationFlowContext context, String username, String error) {
         context.getEvent().user(username).error("invalid_grant");
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS,
-            context.form().setError(error).createLoginUsernamePassword());
+            context.form().setError(error).createForm("scoutid-login.ftl"));
     }
 
     // --- Boilerplate methods unchanged ---

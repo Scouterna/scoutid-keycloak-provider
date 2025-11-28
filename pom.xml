@@ -96,6 +96,12 @@
             <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-themes</artifactId>
+            <version>${keycloak.version}</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -115,12 +121,12 @@
             </plugin>
 		</plugins>
 
-        <!-- TODO: Add the following tag when resources are added -->
-		<!-- <resources>
+        <!-- Add the following tag when resources are added -->
+		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
 			</resource>
-		</resources> -->
+		</resources>
 	</build>
 
 	<profiles>
