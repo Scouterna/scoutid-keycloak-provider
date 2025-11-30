@@ -164,6 +164,24 @@
         ]
       },
       "multivalued": false
+    },
+    {
+      "name": "roles",
+      "displayName": "Roles",
+      "validations": {},
+      "annotations": {
+        "inputType": "textarea"
+      },
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": true
     }
   ],
   "groups": [
