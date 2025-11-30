@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.3.2...v0.4.0) (2025-11-30)
+
+
+### Features
+
+* fetch profile image ([4e88a2b](https://github.com/Scouterna/scoutid-keycloak-provider/commit/4e88a2b9c0f791e2c3a0e4ee1291cd6268107e56))
+* fetching user roles ([8b51a8c](https://github.com/Scouterna/scoutid-keycloak-provider/commit/8b51a8c119563b7be694fa2032bf20f9f972e4a4))
+
+
+### Bug Fixes
+
+* disable profileImage fetch until API is fixed ([6eade2c](https://github.com/Scouterna/scoutid-keycloak-provider/commit/6eade2c362bb1eba1670c22038d26c468a09e96c))
+
 ## [0.3.2](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.3.1...v0.3.2) (2025-11-23)
 
 
