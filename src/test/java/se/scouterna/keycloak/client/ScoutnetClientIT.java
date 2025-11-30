@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import se.scouterna.keycloak.client.dto.AuthResponse;
 import se.scouterna.keycloak.client.dto.Profile;
+import se.scouterna.keycloak.client.dto.Roles;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -80,6 +81,27 @@ public class ScoutnetClientIT {
         } else {
             System.out.println("User has no profile image.");
         }
+
+        // Step 4: Fetch roles
+        Roles roles = scoutnetClient.getRoles(authResponse.getToken());
+        
+        assertNotNull(roles, "Roles response should not be null");
+        
+        // Validation 1: Check if at least one common role type field is not null (e.g., 'organisation' or 'group').
+        // Since roles can be empty for a new user, you must validate based on expected content.
+        // Adjust these checks based on what a test user is expected to have.
+        
+        // Example assertion (Assuming a test user always belongs to at least one organisation or group):
+        boolean hasOrganisationOrGroup = (roles.getOrganisation() != null && !roles.getOrganisation().isEmpty()) ||
+                                         (roles.getGroup() != null && !roles.getGroup().isEmpty());
+        
+        // If the API returns empty maps/nulls for users with no roles, this test needs to be adjusted.
+        // For a typical user, we expect some data:
+        if (!hasOrganisationOrGroup) {
+             System.out.println("WARN: Test user appears to have no organisation or group roles. Roles JSON check will pass if all fields are null.");
+        }
+        
+        System.out.println("Roles fetch successful.");
     }
 
     @Test

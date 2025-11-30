@@ -1,5 +1,6 @@
 package se.scouterna.keycloak.client;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -11,6 +12,7 @@ import org.apache.http.util.EntityUtils;
 import org.jboss.logging.Logger;
 import se.scouterna.keycloak.client.dto.AuthResponse;
 import se.scouterna.keycloak.client.dto.Profile;
+import se.scouterna.keycloak.client.dto.Roles;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -27,6 +29,7 @@ public class ScoutnetClient {
     private static final String AUTH_URL = "https://scoutnet.se/api/authenticate";
     private static final String PROFILE_URL = "https://scoutnet.se/api/get/profile";
     private static final String PROFILE_IMAGE_URL = "https://scoutnet.se/api/get/profile_image";
+    private static final String ROLES_URL = "https://scoutnet.se/api/get/user_roles";
     
     // Max width/height for the avatar to keep the OIDC token size manageable
     private static final int TARGET_IMAGE_SIZE = 128;
@@ -37,6 +40,8 @@ public class ScoutnetClient {
     public ScoutnetClient() {
         this.httpClient = HttpClients.createDefault();
         this.objectMapper = new ObjectMapper();
+
+        this.objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true);
     }
 
     public AuthResponse authenticate(String username, String password) {
@@ -94,6 +99,35 @@ public class ScoutnetClient {
             return null;
         }
     }
+
+    /**
+     * Fetches the raw roles JSON structure from the API.
+     * This structure will be parsed into a flattened list of roles later.
+     */
+    public Roles getRoles(String token) {
+        try {
+            // Use the new ROLES_URL
+            HttpGet request = new HttpGet(ROLES_URL);
+            request.setHeader("Authorization", "Bearer " + token);
+            request.setHeader("Accept", "application/json");
+
+            try (CloseableHttpResponse response = httpClient.execute(request)) {
+                int statusCode = response.getStatusLine().getStatusCode();
+                String responseBody = EntityUtils.toString(response.getEntity());
+
+                if (statusCode != 200) {
+                    log.warnf("Scoutnet roles fetch failed. Status: %d, Body: %s", statusCode, responseBody);
+                    return null;
+                }
+                // Map the response body to the new Roles data structure
+                return objectMapper.readValue(responseBody, Roles.class);
+            }
+        } catch (IOException e) {
+            log.error("Failed to communicate with Scoutnet API for roles fetch", e);
+            return null;
+        }
+    }
+
     /**
      * Fetches, resizes, and compresses the user profile image.
      *
