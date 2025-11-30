@@ -80,7 +80,8 @@ public class ScoutnetAuthenticator implements Authenticator {
         }
 
         // Step 2b: Fetch profile image (non-blocking failure - if image fails, we still proceed)
-        byte[] profileImage = scoutnetClient.getProfileImage(authResponse.getToken());
+        // byte[] profileImage = scoutnetClient.getProfileImage(authResponse.getToken());
+        byte[] profileImage = null;
 
         // Step 2c: Fetch roles information from user (non-blocking)
         Roles roles = scoutnetClient.getRoles(authResponse.getToken());
