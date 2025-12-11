@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.4.0...v0.4.1) (2025-12-11)
+
+
+### Documentation
+
+* add theme to family list ([a6f3bf6](https://github.com/Scouterna/scoutid-keycloak-provider/commit/a6f3bf6e6c63811a10f696eef1b76814586ee71f))
+
 ## [0.4.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.3.2...v0.4.0) (2025-11-30)
 
 
