@@ -8,6 +8,7 @@
 > This repo is part of a family:
 > - [scoutid-keycloak](https://github.com/Scouterna/scoutid-keycloak)
 > - [scoutid-keycloak-provider](https://github.com/Scouterna/scoutid-keycloak-provider) (this repo)
+> - [scoutid-keycloak-theme](https://github.com/Scouterna/scoutid-keycloak-theme)
 > - [scoutid-keycloak-infra](https://github.com/Scouterna/scoutid-keycloak-infra) (private)
 
 This repository contains a custom provider for Keycloak to sign in with ScoutID,
