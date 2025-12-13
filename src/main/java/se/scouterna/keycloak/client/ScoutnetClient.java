@@ -11,6 +11,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.jboss.logging.Logger;
 import se.scouterna.keycloak.client.dto.AuthResponse;
+import se.scouterna.keycloak.client.dto.ContactInfo;
 import se.scouterna.keycloak.client.dto.Profile;
 import se.scouterna.keycloak.client.dto.Roles;
 
@@ -27,6 +28,7 @@ public class ScoutnetClient {
 
     private static final Logger log = Logger.getLogger(ScoutnetClient.class);
     private static final String AUTH_URL = "https://scoutnet.se/api/authenticate";
+    private static final String REFRESH_TOKEN_URL = "https://scoutnet.se/api/refresh_token";
     private static final String PROFILE_URL = "https://scoutnet.se/api/get/profile";
     private static final String PROFILE_IMAGE_URL = "https://scoutnet.se/api/get/profile_image";
     private static final String ROLES_URL = "https://scoutnet.se/api/get/user_roles";
@@ -45,11 +47,18 @@ public class ScoutnetClient {
     }
 
     public AuthResponse authenticate(String username, String password) {
+        return authenticateWithAppId(username, password, null, null, null);
+    }
+
+    public AuthResponse authenticateWithAppId(String username, String password, String appId, String appName, String deviceName) {
         try {
             HttpPost request = new HttpPost(AUTH_URL);
             Map<String, String> payload = new HashMap<>();
             payload.put("username", username);
             payload.put("password", password);
+            if (appId != null) payload.put("app_id", appId);
+            if (appName != null) payload.put("app_name", appName);
+            if (deviceName != null) payload.put("device_name", deviceName);
 
             String jsonPayload = objectMapper.writeValueAsString(payload);
             request.setEntity(new StringEntity(jsonPayload));
@@ -64,7 +73,9 @@ public class ScoutnetClient {
                     log.warnf("Scoutnet authentication failed for user %s. Status: %d, Body: %s", username, statusCode, responseBody);
                     return null;
                 }
-                return objectMapper.readValue(responseBody, AuthResponse.class);
+                AuthResponse authResponse = objectMapper.readValue(responseBody, AuthResponse.class);
+
+                return authResponse;
             }
         } catch (IOException e) {
             log.error("Failed to communicate with Scoutnet API for authentication", e);
@@ -84,12 +95,14 @@ public class ScoutnetClient {
             request.setHeader("Authorization", "Bearer " + token);
             request.setHeader("Accept", "application/json");
 
+
             try (CloseableHttpResponse response = httpClient.execute(request)) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 String responseBody = EntityUtils.toString(response.getEntity());
 
                 if (statusCode != 200) {
                     log.warnf("Scoutnet profile fetch failed. Status: %d, Body: %s", statusCode, responseBody);
+
                     return null;
                 }
                 return objectMapper.readValue(responseBody, Profile.class);
@@ -201,4 +214,29 @@ public class ScoutnetClient {
             return null; // Fail gracefully
         }
     }
+
+    public String refreshToken(String currentToken) {
+        try {
+            HttpPost request = new HttpPost(REFRESH_TOKEN_URL);
+            request.setHeader("Authorization", "Bearer " + currentToken);
+            request.setHeader("Accept", "application/json");
+
+            try (CloseableHttpResponse response = httpClient.execute(request)) {
+                int statusCode = response.getStatusLine().getStatusCode();
+                String responseBody = EntityUtils.toString(response.getEntity());
+
+                if (statusCode != 200) {
+                    log.warnf("ScoutNet token refresh failed. Status: %d, Body: %s", statusCode, responseBody);
+                    return null;
+                }
+                AuthResponse authResponse = objectMapper.readValue(responseBody, AuthResponse.class);
+                return authResponse != null ? authResponse.getToken() : null;
+            }
+        } catch (IOException e) {
+            log.error("Failed to refresh ScoutNet token", e);
+            return null;
+        }
+    }
+
+
 }

@@ -16,7 +16,8 @@ services:
     volumes:
       - keycloak_data:/opt/keycloak/data
       - ./certs:/opt/keycloak/conf/certs:ro
-      - ./target/keycloak-scoutnet-authenticator-0.3.2-SNAPSHOT.jar:/opt/keycloak/providers/keycloak-scoutnet-authenticator-0.3.2-SNAPSHOT.jar
+      - ./target/keycloak-scoutnet-authenticator-0.4.1-SNAPSHOT.jar:/opt/keycloak/providers/keycloak-scoutnet-authenticator-0.4.1-SNAPSHOT.jar
+      - ./keycloak-theme-for-kc-all-other-versions.jar:/opt/keycloak/providers/keycloak-scoutid-theme.jar
 
 volumes:
   keycloak_data:

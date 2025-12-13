@@ -13,7 +13,6 @@ import se.scouterna.keycloak.client.ScoutnetClient;
 import se.scouterna.keycloak.client.dto.*; // Added rich profile DTOs
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,8 +64,9 @@ public class ScoutnetAuthenticator implements Authenticator {
             return;
         }
 
-        // Step 1: Authenticate and get the token
-        AuthResponse authResponse = scoutnetClient.authenticate(username, password);
+        // Step 1: Try persistent token with proper UUID app_id
+        AuthResponse authResponse = scoutnetClient.authenticateWithAppId(username, password, 
+            "keycloak-scoutid", "Keycloak ScoutID Provider", "Keycloak Server");
         if (authResponse == null || authResponse.getToken() == null || authResponse.getToken().isEmpty()) {
             failAuthentication(context, username, "Invalid username or password.");
             return;
@@ -75,20 +75,31 @@ public class ScoutnetAuthenticator implements Authenticator {
         // Step 2: Use the token to fetch the full profile
         Profile profile = scoutnetClient.getProfile(authResponse.getToken());
         if (profile == null) {
-            failAuthentication(context, username, "Could not retrieve user profile from Scoutnet after successful login.");
-            return;
+            log.warnf("Persistent token failed, trying temporary token for user: %s", username);
+            // Fallback to temporary token
+            AuthResponse tempAuthResponse = scoutnetClient.authenticate(username, password);
+            if (tempAuthResponse != null && tempAuthResponse.getToken() != null) {
+                profile = scoutnetClient.getProfile(tempAuthResponse.getToken());
+                if (profile != null) {
+                    authResponse = tempAuthResponse; // Use the working token
+                    log.infof("Temporary token worked for user: %s", username);
+                }
+            }
+            
+            if (profile == null) {
+                failAuthentication(context, username, "Could not retrieve user profile from Scoutnet after successful login.");
+                return;
+            }
         }
 
-        // Step 2b: Fetch profile image (non-blocking failure - if image fails, we still proceed)
-        // byte[] profileImage = scoutnetClient.getProfileImage(authResponse.getToken());
-        byte[] profileImage = null;
-
-        // Step 2c: Fetch roles information from user (non-blocking)
+        // Step 2b: Fetch roles information (optional - can be stored for quick access)
         Roles roles = scoutnetClient.getRoles(authResponse.getToken());
-
         if (roles == null) {
             log.infof("Could not retrieve user roles from Scoutnet after successful login.");
         }
+
+        // Store the persistent token for later use
+        String persistentToken = authResponse.getToken();
 
         // Step 3: Find or create the Keycloak user
         String keycloakUsername = "scoutnet-" + profile.getMemberNo();
@@ -102,43 +113,34 @@ public class ScoutnetAuthenticator implements Authenticator {
             log.infof("Updating existing Keycloak user: %s from Scoutnet profile.", keycloakUsername);
         }
 
-        // Step 4: Update the user with the rich profile data
-        updateUserFromProfile(user, profile, profileImage, roles);
+        // Step 4: Update the user with essential data and optionally roles
+        updateUserFromProfile(user, profile, persistentToken, roles);
 
         context.setUser(user);
         context.getAuthenticationSession().removeAuthNote("username");
         context.success();
     }
 
-    private void updateUserFromProfile(UserModel user, Profile profile, byte[] imageBytes, Roles roles) {
+    private void updateUserFromProfile(UserModel user, Profile profile, String persistentToken, Roles roles) {
         // --- Basic Info ---
         user.setFirstName(profile.getFirstName());
         user.setLastName(profile.getLastName());
         user.setEmail(profile.getEmail());
 
-        // --- Custom Attributes ---
+        // --- Essential Attributes ---
         user.setSingleAttribute("scoutnet_member_no", String.valueOf(profile.getMemberNo()));
+        user.setSingleAttribute("scoutnet_token", persistentToken);
         user.setSingleAttribute("scoutnet_dob", profile.getDob());
 
-        // --- OIDC Picture ---
-        if (imageBytes != null && imageBytes.length > 0) {
-            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-            // We use the standard OIDC attribute name "picture".
-            // We prepend the data URI scheme so clients use it directly as <img src="...">
-            // We forced the format to JPEG in the client.
-            user.setSingleAttribute("picture", "data:image/jpeg;base64," + base64Image);
-        }
-
-        // --- Roles ---
+        // --- Roles (stored for authorization - legitimate business need) ---
         if (roles != null) {
             List<String> roleList = parseAndFlattenRoles(roles);
-            
-            // This is the correct method call: setting the final list of strings
-            // for the custom attribute named "roles".
-            user.setAttribute("roles", roleList); 
+            user.setAttribute("roles", roleList);
         }
+        
 
-        // --- Memberships ---
+
+        // --- Primary Group (for basic identity) ---
         if (profile.getMemberships() != null && profile.getMemberships().getGroup() != null) {
             profile.getMemberships().getGroup().values().stream()
                 .filter(GroupMembership::isPrimary)
@@ -156,16 +158,11 @@ public class ScoutnetAuthenticator implements Authenticator {
     private List<String> parseAndFlattenRoles(Roles roles) {
         Set<String> roleSet = new HashSet<>();
         
-        // The Map type now accurately reflects the three-level nesting: 
-        // Key (Role Type Name) -> Value (Map<Type ID, Map<Role ID, Role Name>>)
         Map<String, Map<String, Map<String, String>>> allRolesMap = new HashMap<>();
 
-        // --- AGGREGATE ALL ROLE MAPS FROM THE ROLES OBJECT ---
-        // Safely aggregate all role types into one map for simplified iteration.
-        // NOTE: Ensure your Roles.java class has working getters for all fields.
+        // Aggregate all role types
         if (roles.getOrganisation() != null) allRolesMap.put("organisation", roles.getOrganisation());
         if (roles.getGroup() != null) allRolesMap.put("group", roles.getGroup());
-        // ... add all other role types (region, project, troop, etc.) ...
         if (roles.getRegion() != null) allRolesMap.put("region", roles.getRegion());
         if (roles.getProject() != null) allRolesMap.put("project", roles.getProject());
         if (roles.getNetwork() != null) allRolesMap.put("network", roles.getNetwork());
@@ -174,57 +171,38 @@ public class ScoutnetAuthenticator implements Authenticator {
         if (roles.getTroop() != null) allRolesMap.put("troop", roles.getTroop());
         if (roles.getPatrol() != null) allRolesMap.put("patrol", roles.getPatrol());
 
-
-        // --- ITERATION AND FLATTENING LOGIC ---
-
-        // 1. Iterate over the role types (e.g., "organisation")
+        // Flatten roles with wildcards
         for (Map.Entry<String, Map<String, Map<String, String>>> roleTypeEntry : allRolesMap.entrySet()) {
             String roleType = roleTypeEntry.getKey();
-            // rolesForType is now the Map<Type ID, Map<Role ID, Role Name>>
             Map<String, Map<String, String>> rolesForType = roleTypeEntry.getValue();
 
             if (rolesForType != null && !rolesForType.isEmpty()) {
-
-                // 2. Iterate over the Type IDs (e.g., "692")
                 for (Map.Entry<String, Map<String, String>> roleTypeIdEntry : rolesForType.entrySet()) {
                     String roleTypeId = roleTypeIdEntry.getKey();
-                    // rolesForTypeId is now the Map<Role ID, Role Name>
                     Map<String, String> rolesForTypeId = roleTypeIdEntry.getValue();
                     
                     if (rolesForTypeId != null && !rolesForTypeId.isEmpty()) {
-                        
-                        // 3. Iterate over the Role ID/Role Name pairs (e.g., "68": "board_member")
                         for (Map.Entry<String, String> finalRoleEntry : rolesForTypeId.entrySet()) {
-                            // String roleId = finalRoleEntry.getKey(); // Role ID (not used in final string)
-                            String roleName = finalRoleEntry.getValue(); // Role Name
+                            String roleName = finalRoleEntry.getValue();
 
-                            // Generate all wildcard combinations based on your PHP logic:
-                            
-                            // Full specific role: organisation:692:board_member
+                            // Generate wildcard combinations
                             roleSet.add(roleType + ":" + roleTypeId + ":" + roleName);
-                            
-                            // Type-wide role: organisation:*:board_member
                             roleSet.add(roleType + ":*:" + roleName);
-                            
-                            // Global role: *:*:board_member
                             roleSet.add("*:*:" + roleName);
                         }
-                        
-                        // Add the wildcard for all roles within this specific type ID: organisation:692:*
                         roleSet.add(roleType + ":" + roleTypeId + ":*");
                     }
                 }
-                
-                // Add the wildcard for all roles within this specific type: organisation:*:*
                 roleSet.add(roleType + ":*:*");
             }
         }
         
-        // Finalize the list: convert Set to List and sort
         List<String> roleList = new ArrayList<>(roleSet);
         Collections.sort(roleList);
         return roleList;
     }
+
+
 
     /**
      * Helper to log and return an error challenge to the user.
