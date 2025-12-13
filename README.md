@@ -55,7 +55,122 @@ In order to see our custom fields, you need to make them visible, and also inclu
 2. In order to include a field into a oidc response, enter Client scopes -> profile -> Mappers -> birthdate and set user attribute to scoutnet_dob
 3. Repeat for the other fields as well.
 
-### Using scoutid as sub
+### Fresh Contact Data Integration
+TODO: clean up these instructions after testing, AI generated
+
+This provider now supports fetching fresh contact information from ScoutNet without storing it in Keycloak, ensuring data privacy and freshness.
+
+### What's Stored vs. What's Fresh
+
+**Stored in Keycloak (minimal):**
+- Basic identity: name, email, date of birth
+- ScoutNet member number and token
+- User roles (for authorization)
+- Primary group membership
+
+**Fetched fresh from ScoutNet:**
+- Contact information (addresses, phone numbers)
+- Profile images
+- Detailed membership data
+
+### Client Integration
+
+#### Option 1: Direct ScoutNet API Access (Recommended)
+
+Clients can use the stored `scoutnet_token` to fetch fresh data directly:
+
+```javascript
+// Get user info from Keycloak
+const userInfo = await fetch('/auth/realms/master/protocol/openid-connect/userinfo', {
+  headers: { Authorization: `Bearer ${keycloakAccessToken}` }
+});
+const user = await userInfo.json();
+
+// Use ScoutNet token for fresh contact data
+if (user.scoutnet_token) {
+  const contactData = await fetch('https://scoutnet.se/api/get/profile', {
+    headers: { Authorization: `Bearer ${user.scoutnet_token}` }
+  });
+  const profile = await contactData.json();
+  console.log('Fresh addresses:', profile.addresses);
+}
+```
+
+#### Option 2: Server-side Utility (Java)
+
+For server-side applications:
+
+```java
+ScoutnetUserAttributeProvider provider = new ScoutnetUserAttributeProvider();
+ContactInfo contactInfo = provider.getFreshContactInfo(user);
+if (contactInfo != null) {
+    Map<String, Address> addresses = contactInfo.getAddresses();
+    // Use fresh address data
+}
+```
+
+### Keycloak Configuration
+
+#### 1. Authentication Flow Setup
+1. Login to Keycloak Admin Console
+2. Go to **Authentication** → **Flows**
+3. Create a copy of the "Browser" flow named "ScoutID Browser"
+4. Remove: Kerberos, Identity Provider Redirector
+5. Add **Scoutnet Password Authenticator** as **Alternative**
+6. Bind this flow as the default **Browser Flow**
+7. **Important**: Set **security-admin-console** client's Browser Flow to "browser" to maintain admin access
+
+#### 2. User Profile Configuration
+1. Go to **Realm Settings** → **User Profile** → **JSON Editor**
+2. Add ScoutNet attributes to make them visible:
+
+```json
+{
+  "attributes": [
+    {
+      "name": "scoutnet_member_no",
+      "displayName": "ScoutNet Member Number",
+      "validations": {},
+      "permissions": {
+        "view": ["admin", "user"],
+        "edit": ["admin"]
+      }
+    },
+    {
+      "name": "scoutnet_dob",
+      "displayName": "Date of Birth",
+      "validations": {},
+      "permissions": {
+        "view": ["admin", "user"],
+        "edit": ["admin"]
+      }
+    },
+    {
+      "name": "roles",
+      "displayName": "ScoutNet Roles",
+      "validations": {},
+      "permissions": {
+        "view": ["admin", "user"],
+        "edit": ["admin"]
+      },
+      "multivalued": true
+    }
+  ]
+}
+```
+
+#### 3. Client Scope for Roles (Optional)
+1. Go to **Client Scopes** → **Create**
+2. Name: `scoutnet-roles`
+3. Add **User Attribute** mapper:
+   - Name: `roles-mapper`
+   - User Attribute: `roles`
+   - Token Claim Name: `roles`
+   - Claim JSON Type: `JSON`
+   - Multivalued: `On`
+
+
+## Using scoutid as sub
 For some client applications, a known sub is needed to prepopulate members before they are created by keycloak, or for compitability with other login methods. The sub is the unique user id used by OIDC, by default created when a user is initialised in keycloak. Note that using scoutnet member number as sub can cause problems when using a combined login method (upcoming feature). If you want to use the scoutnet member id as sub:
 1. Create the client
 2. Under client scopes enter [client_name]-dedicated to change client specific default scope
