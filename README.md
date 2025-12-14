@@ -23,6 +23,9 @@ instance. Make sure you've got Docker installed.
 # Generate certificates to run Keycloak in HTTPS mode. You should only need to do this once.
 ./generate-certs.sh
 
+# Fetch the ScoutID theme
+curl -fsSL -o keycloak-theme-for-kc-all-other-versions.jar https://github.com/Scouterna/scoutid-keycloak-theme/releases/latest/download/keycloak-theme-for-kc-all-other-versions.jar
+
 # Start Keycloak
 docker compose up
 
@@ -54,6 +57,9 @@ In order to see our custom fields, you need to make them visible, and also inclu
 1. Go to Realm settings -> User profile -> JSON editor and replace the json with the content of config_support/user_profile.json
 2. In order to include a field into a oidc response, enter Client scopes -> profile -> Mappers -> birthdate and set user attribute to scoutnet_dob
 3. Repeat for the other fields as well.
+
+### Enabling the ScoutID theme
+Go into Realm settings, enter tab Theme and choose ScoutID.
 
 ### Using scoutid as sub
 For some client applications, a known sub is needed to prepopulate members before they are created by keycloak, or for compitability with other login methods. The sub is the unique user id used by OIDC, by default created when a user is initialised in keycloak. Note that using scoutnet member number as sub can cause problems when using a combined login method (upcoming feature). If you want to use the scoutnet member id as sub:
