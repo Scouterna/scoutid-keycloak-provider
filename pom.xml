@@ -29,9 +29,9 @@
 
     <distributionManagement>
         <repository>
-        <id>github</id>
-        <name>GitHub Packages</name>
-        <url>https://maven.pkg.github.com/Scouterna/scoutid-keycloak-provider</url>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/Scouterna/scoutid-keycloak-provider</url>
         </repository>
     </distributionManagement>
 
