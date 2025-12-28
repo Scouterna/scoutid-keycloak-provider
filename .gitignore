@@ -44,3 +44,6 @@ buildNumber.properties
 
 # Development certificates
 certs/
+
+# Local temporary files
+tmp/
