@@ -12,6 +12,7 @@ import org.keycloak.models.utils.KeycloakModelUtils;
 import se.scouterna.keycloak.client.ScoutnetClient;
 import se.scouterna.keycloak.client.dto.*; // Added rich profile DTOs
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -65,6 +66,12 @@ public class ScoutnetAuthenticator implements Authenticator {
         if (username == null || username.trim().isEmpty() || password == null || password.isEmpty()) {
             failAuthentication(context, username, "Please provide both a username and a password.", correlationId);
             return;
+        }
+
+        if (username.contains("@") || (username.matches("\\d{7}") && !username.matches("\\d{10,12}"))) {
+            // Email addresses and 7-digit member numbers don't need normalization
+        } else {
+            username = normalizePersonnummer(username);
         }
 
         // Step 1: Authenticate and get a token
@@ -247,6 +254,32 @@ public class ScoutnetAuthenticator implements Authenticator {
         context.getEvent().user(username).error("invalid_grant");
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS,
             context.form().setError(messageKey).createLoginUsernamePassword());
+    }
+
+    private String normalizePersonnummer(String input) {
+        // Remove hyphen and normalize to 12 digits
+        String digits = input.replaceAll("-", "");
+        
+        if (digits.matches("\\d{10}")) {
+            // ÅÅMMDDXXXX -> ÅÅÅÅMMDDXXXX (add century based on age < 100)
+            int year = Integer.parseInt(digits.substring(0, 2));
+            int currentYear = LocalDate.now().getYear();
+            int currentCentury = currentYear / 100;
+            int currentYearInCentury = currentYear % 100;
+            
+            // If year is in future or person would be >= 100, use previous century
+            String century = (year > currentYearInCentury || (currentYear - (currentCentury * 100 + year)) >= 100) 
+                ? String.valueOf(currentCentury - 1) 
+                : String.valueOf(currentCentury);
+            
+            return century + digits;
+        } else if (digits.matches("\\d{12}")) {
+            // Already 12 digits
+            return digits;
+        }
+        
+        // Return unchanged if not a recognizable personnummer format
+        return input;
     }
 
     // --- Boilerplate methods unchanged ---
