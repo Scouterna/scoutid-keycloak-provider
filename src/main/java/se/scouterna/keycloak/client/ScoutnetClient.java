@@ -2,13 +2,6 @@ package se.scouterna.keycloak.client;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.jboss.logging.Logger;
 import se.scouterna.keycloak.client.dto.AuthResponse;
 import se.scouterna.keycloak.client.dto.Profile;
@@ -20,6 +13,11 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,39 +32,43 @@ public class ScoutnetClient {
     // Max width/height for the avatar to keep the OIDC token size manageable
     private static final int TARGET_IMAGE_SIZE = 128;
 
-    private final CloseableHttpClient httpClient;
+    private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
     public ScoutnetClient() {
-        this.httpClient = HttpClients.createDefault();
+        this.httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
         this.objectMapper = new ObjectMapper();
-
         this.objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true);
     }
 
     public AuthResponse authenticate(String username, String password) {
         try {
-            HttpPost request = new HttpPost(AUTH_URL);
             Map<String, String> payload = new HashMap<>();
             payload.put("username", username);
             payload.put("password", password);
 
             String jsonPayload = objectMapper.writeValueAsString(payload);
-            request.setEntity(new StringEntity(jsonPayload));
-            request.setHeader("Accept", "application/json");
-            request.setHeader("Content-type", "application/json");
+            
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(AUTH_URL))
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .timeout(Duration.ofSeconds(30))
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .build();
 
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                int statusCode = response.getStatusLine().getStatusCode();
-                String responseBody = EntityUtils.toString(response.getEntity());
-
-                if (statusCode != 200) {
-                    log.warnf("Scoutnet authentication failed for user %s. Status: %d, Body: %s", username, statusCode, responseBody);
-                    return null;
-                }
-                return objectMapper.readValue(responseBody, AuthResponse.class);
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() != 200) {
+                log.warnf("Scoutnet authentication failed for user %s. Status: %d, Body: %s", 
+                    username, response.statusCode(), response.body());
+                return null;
             }
-        } catch (IOException e) {
+            
+            return objectMapper.readValue(response.body(), AuthResponse.class);
+        } catch (Exception e) {
             log.error("Failed to communicate with Scoutnet API for authentication", e);
             return null;
         }
@@ -80,21 +82,24 @@ public class ScoutnetClient {
      */
     public Profile getProfile(String token) {
         try {
-            HttpGet request = new HttpGet(PROFILE_URL);
-            request.setHeader("Authorization", "Bearer " + token);
-            request.setHeader("Accept", "application/json");
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(PROFILE_URL))
+                .header("Authorization", "Bearer " + token)
+                .header("Accept", "application/json")
+                .timeout(Duration.ofSeconds(30))
+                .GET()
+                .build();
 
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                int statusCode = response.getStatusLine().getStatusCode();
-                String responseBody = EntityUtils.toString(response.getEntity());
-
-                if (statusCode != 200) {
-                    log.warnf("Scoutnet profile fetch failed. Status: %d, Body: %s", statusCode, responseBody);
-                    return null;
-                }
-                return objectMapper.readValue(responseBody, Profile.class);
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() != 200) {
+                log.warnf("Scoutnet profile fetch failed. Status: %d, Body: %s", 
+                    response.statusCode(), response.body());
+                return null;
             }
-        } catch (IOException e) {
+            
+            return objectMapper.readValue(response.body(), Profile.class);
+        } catch (Exception e) {
             log.error("Failed to communicate with Scoutnet API for profile fetch", e);
             return null;
         }
@@ -106,23 +111,24 @@ public class ScoutnetClient {
      */
     public Roles getRoles(String token) {
         try {
-            // Use the new ROLES_URL
-            HttpGet request = new HttpGet(ROLES_URL);
-            request.setHeader("Authorization", "Bearer " + token);
-            request.setHeader("Accept", "application/json");
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(ROLES_URL))
+                .header("Authorization", "Bearer " + token)
+                .header("Accept", "application/json")
+                .timeout(Duration.ofSeconds(30))
+                .GET()
+                .build();
 
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                int statusCode = response.getStatusLine().getStatusCode();
-                String responseBody = EntityUtils.toString(response.getEntity());
-
-                if (statusCode != 200) {
-                    log.warnf("Scoutnet roles fetch failed. Status: %d, Body: %s", statusCode, responseBody);
-                    return null;
-                }
-                // Map the response body to the new Roles data structure
-                return objectMapper.readValue(responseBody, Roles.class);
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() != 200) {
+                log.warnf("Scoutnet roles fetch failed. Status: %d, Body: %s", 
+                    response.statusCode(), response.body());
+                return null;
             }
-        } catch (IOException e) {
+            
+            return objectMapper.readValue(response.body(), Roles.class);
+        } catch (Exception e) {
             log.error("Failed to communicate with Scoutnet API for roles fetch", e);
             return null;
         }
@@ -136,24 +142,25 @@ public class ScoutnetClient {
      */
     public byte[] getProfileImage(String token) {
         try {
-            HttpGet request = new HttpGet(PROFILE_IMAGE_URL);
-            request.setHeader("Authorization", "Bearer " + token);
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(PROFILE_IMAGE_URL))
+                .header("Authorization", "Bearer " + token)
+                .timeout(Duration.ofSeconds(30))
+                .GET()
+                .build();
+
+            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
             
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                int statusCode = response.getStatusLine().getStatusCode();
-                
-                if (statusCode == 200) {
-                    byte[] rawBytes = EntityUtils.toByteArray(response.getEntity());
-                    return processImage(rawBytes);
-                } else if (statusCode == 404) {
-                    log.debug("No profile image found for user.");
-                    return null;
-                } else {
-                    log.warnf("Scoutnet profile image fetch failed. Status: %d", statusCode);
-                    return null;
-                }
+            if (response.statusCode() == 200) {
+                return processImage(response.body());
+            } else if (response.statusCode() == 404) {
+                log.debug("No profile image found for user.");
+                return null;
+            } else {
+                log.warnf("Scoutnet profile image fetch failed. Status: %d", response.statusCode());
+                return null;
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Failed to communicate with Scoutnet API for profile image fetch", e);
             return null;
         }
