@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.0.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.4.1...v1.0.0) (2025-12-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* username convention updated
+
+### Features
+
+* improved logging and error tracing ([2af9773](https://github.com/Scouterna/scoutid-keycloak-provider/commit/2af97739e1a0290ddb57e17fdc34a4942065c565))
+* parse non-compliant personnummer format ([0e6e3f2](https://github.com/Scouterna/scoutid-keycloak-provider/commit/0e6e3f2c7eb95360929704284e6e3de89326415c))
+* set scoutnet url as env variable ([4531bf8](https://github.com/Scouterna/scoutid-keycloak-provider/commit/4531bf88e896a82617c8ff8f6eb367c7026eb817))
+
+
+### Bug Fixes
+
+* username convention updated ([a5be45c](https://github.com/Scouterna/scoutid-keycloak-provider/commit/a5be45cc3f2958453c0e239e837b5ee96117c20e))
+
+
+### Documentation
+
+* gitignore for tmp folder ([3449228](https://github.com/Scouterna/scoutid-keycloak-provider/commit/3449228542d447ea9069abadfe06abdc17c272dc))
+* update config example ([65382b3](https://github.com/Scouterna/scoutid-keycloak-provider/commit/65382b32baf5734773bf3883a681adcfa6f7e98f))
+
 ## [0.4.1](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.4.0...v0.4.1) (2025-12-14)
 
 

@@ -5,7 +5,7 @@
 
     <groupId>se.scouterna.keycloak</groupId>
     <artifactId>keycloak-scoutnet-authenticator</artifactId>
-    <version>0.4.2-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>Keycloak Scoutnet Authenticator</name>
