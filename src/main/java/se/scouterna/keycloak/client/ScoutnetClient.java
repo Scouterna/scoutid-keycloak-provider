@@ -26,10 +26,11 @@ import java.util.Map;
 public class ScoutnetClient {
 
     private static final Logger log = Logger.getLogger(ScoutnetClient.class);
-    private static final String AUTH_URL = "https://scoutnet.se/api/authenticate";
-    private static final String PROFILE_URL = "https://scoutnet.se/api/get/profile";
-    private static final String PROFILE_IMAGE_URL = "https://scoutnet.se/api/get/profile_image";
-    private static final String ROLES_URL = "https://scoutnet.se/api/get/user_roles";
+    private static final String SCOUTNET_BASE_URL = System.getenv().getOrDefault("SCOUTNET_BASE_URL", "https://scoutnet.se");
+    private static final String AUTH_URL = SCOUTNET_BASE_URL + "/api/authenticate";
+    private static final String PROFILE_URL = SCOUTNET_BASE_URL + "/api/get/profile";
+    private static final String PROFILE_IMAGE_URL = SCOUTNET_BASE_URL + "/api/get/profile_image";
+    private static final String ROLES_URL = SCOUTNET_BASE_URL + "/api/get/user_roles";
     
     // Max width/height for the avatar to keep the OIDC token size manageable
     private static final int TARGET_IMAGE_SIZE = 128;
