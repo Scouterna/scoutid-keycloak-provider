@@ -11,14 +11,14 @@
         "username-prohibited-characters": {},
         "up-username-not-idn-homograph": {}
       },
+      "annotations": {},
       "permissions": {
         "view": [
           "admin",
           "user"
         ],
         "edit": [
-          "admin",
-          "user"
+          "admin"
         ]
       },
       "multivalued": false
@@ -32,6 +32,7 @@
           "max": 255
         }
       },
+      "annotations": {},
       "required": {
         "roles": [
           "user"
@@ -43,34 +44,7 @@
           "user"
         ],
         "edit": [
-          "admin",
-          "user"
-        ]
-      },
-      "multivalued": false
-    },
-    {
-      "name": "firstName",
-      "displayName": "${firstName}",
-      "validations": {
-        "length": {
-          "max": 255
-        },
-        "person-name-prohibited-characters": {}
-      },
-      "required": {
-        "roles": [
-          "user"
-        ]
-      },
-      "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin",
-          "user"
+          "admin"
         ]
       },
       "multivalued": false
@@ -84,28 +58,12 @@
         },
         "person-name-prohibited-characters": {}
       },
+      "annotations": {},
       "required": {
         "roles": [
           "user"
         ]
       },
-      "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin",
-          "user"
-        ]
-      },
-      "multivalued": false
-    },
-    {
-      "name": "scoutnet_dob",
-      "displayName": "Date of birth",
-      "validations": {},
-      "annotations": {},
       "permissions": {
         "view": [
           "admin",
@@ -182,6 +140,48 @@
         ]
       },
       "multivalued": true
+    },
+    {
+      "name": "firstName",
+      "displayName": "${firstName}",
+      "validations": {
+        "length": {
+          "max": 255
+        },
+        "person-name-prohibited-characters": {}
+      },
+      "annotations": {},
+      "required": {
+        "roles": [
+          "user"
+        ]
+      },
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "picture",
+      "displayName": "Profile picture",
+      "validations": {},
+      "annotations": {},
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
     }
   ],
   "groups": [
