@@ -2,6 +2,7 @@ package se.scouterna.keycloak.client;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import se.scouterna.keycloak.client.dto.AuthResult;
 import se.scouterna.keycloak.client.dto.AuthResponse;
 import se.scouterna.keycloak.client.dto.Profile;
 import se.scouterna.keycloak.client.dto.Roles;
@@ -24,8 +25,10 @@ public class ScoutnetClientIT {
     void setUp() {
         scoutnetClient = new ScoutnetClient();
         // Read credentials from environment variables for security
-        username = System.getenv("SCOUTNET_USERNAME");
-        password = System.getenv("SCOUTNET_PASSWORD");
+        // username = System.getenv("SCOUTNET_USERNAME");
+        // password = System.getenv("SCOUTNET_PASSWORD");
+        username = "teo.elmfeldt@malarscouterna.se";
+        password = "MultiKulti11";
 
         if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
             // This will cause tests that need credentials to be skipped
@@ -39,9 +42,15 @@ public class ScoutnetClientIT {
             return; 
         }
 
-        // Step 1: Authenticate and get a token
-        AuthResponse authResponse = scoutnetClient.authenticate(username, password);
+        String correlationId = "test-" + System.currentTimeMillis();
 
+        // Step 1: Authenticate and get a token
+        AuthResult authResult = scoutnetClient.authenticate(username, password, correlationId);
+
+        assertNotNull(authResult, "Authentication result should not be null");
+        assertTrue(authResult.isSuccess(), "Authentication should succeed");
+        
+        AuthResponse authResponse = authResult.getAuthResponse();
         assertNotNull(authResponse, "Authentication response should not be null");
         assertNotNull(authResponse.getToken(), "Token should not be null");
         assertFalse(authResponse.getToken().isEmpty(), "Token should not be empty");
@@ -51,7 +60,7 @@ public class ScoutnetClientIT {
         System.out.println("Authentication successful for member no: " + authResponse.getMember().getMemberNo());
 
         // Step 2: Use the token to fetch the profile
-        Profile profile = scoutnetClient.getProfile(authResponse.getToken());
+        Profile profile = scoutnetClient.getProfile(authResponse.getToken(), correlationId);
 
         assertNotNull(profile, "Profile response should not be null");
         assertEquals(authResponse.getMember().getMemberNo(), profile.getMemberNo(), "Member number in profile should match member number in auth response");
@@ -65,7 +74,7 @@ public class ScoutnetClientIT {
         System.out.println("Profile fetch successful for: " + profile.getFirstName());
 
         // Step 3: Fetch Profile Image
-        byte[] imageBytes = scoutnetClient.getProfileImage(authResponse.getToken());
+        byte[] imageBytes = scoutnetClient.getProfileImage(authResponse.getToken(), correlationId);
         
         if (imageBytes != null) {
             System.out.println("Compressed Image size: " + imageBytes.length + " bytes.");
@@ -83,7 +92,7 @@ public class ScoutnetClientIT {
         }
 
         // Step 4: Fetch roles
-        Roles roles = scoutnetClient.getRoles(authResponse.getToken());
+        Roles roles = scoutnetClient.getRoles(authResponse.getToken(), correlationId);
         
         assertNotNull(roles, "Roles response should not be null");
         
@@ -106,7 +115,9 @@ public class ScoutnetClientIT {
 
     @Test
     void testFailedAuthentication() {
-        AuthResponse response = scoutnetClient.authenticate("invalid-username", "bad-password");
-        assertNull(response, "Authentication with invalid credentials should return null");
+        AuthResult result = scoutnetClient.authenticate("invalid-username", "bad-password", "test-fail");
+        assertNotNull(result, "Authentication result should not be null");
+        assertFalse(result.isSuccess(), "Authentication with invalid credentials should fail");
+        assertEquals(AuthResult.AuthError.INVALID_CREDENTIALS, result.getError(), "Should return invalid credentials error");
     }
 }

@@ -3,7 +3,9 @@ package se.scouterna.keycloak.client;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.logging.Logger;
+import se.scouterna.keycloak.client.dto.AuthResult;
 import se.scouterna.keycloak.client.dto.AuthResponse;
+import se.scouterna.keycloak.client.dto.ErrorResponse;
 import se.scouterna.keycloak.client.dto.Profile;
 import se.scouterna.keycloak.client.dto.Roles;
 
@@ -43,7 +45,36 @@ public class ScoutnetClient {
         this.objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true);
     }
 
-    public AuthResponse authenticate(String username, String password) {
+    private String getErrorType(int statusCode) {
+        return switch (statusCode) {
+            case 400 -> "Bad Request";
+            case 401 -> "Unauthorized";
+            case 403 -> "Forbidden";
+            case 404 -> "Not Found";
+            case 429 -> "Rate Limited";
+            case 500 -> "Internal Server Error";
+            case 502 -> "Bad Gateway";
+            case 503 -> "Service Unavailable";
+            case 504 -> "Gateway Timeout";
+            default -> "HTTP " + statusCode;
+        };
+    }
+
+    private String tryParseErrorResponse(String responseBody) {
+        if (responseBody == null || responseBody.trim().isEmpty()) {
+            return "No error details";
+        }
+        
+        try {
+            ErrorResponse errorResponse = objectMapper.readValue(responseBody, ErrorResponse.class);
+            return errorResponse.getSafeErrorMessage();
+        } catch (Exception e) {
+            // If we can't parse as ErrorResponse, return a safe truncated version
+            return responseBody.length() > 50 ? responseBody.substring(0, 50) + "..." : responseBody;
+        }
+    }
+
+    public AuthResult authenticate(String username, String password, String correlationId) {
         try {
             Map<String, String> payload = new HashMap<>();
             payload.put("username", username);
@@ -61,16 +92,30 @@ public class ScoutnetClient {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             
-            if (response.statusCode() != 200) {
-                log.warnf("Scoutnet authentication failed for user %s. Status: %d, Body: %s", 
-                    username, response.statusCode(), response.body());
-                return null;
+            if (response.statusCode() == 200) {
+                AuthResponse authResponse = objectMapper.readValue(response.body(), AuthResponse.class);
+                return AuthResult.success(authResponse);
+            } else {
+                String errorType = getErrorType(response.statusCode());
+                String errorDetail = tryParseErrorResponse(response.body());
+                log.warnf("[%s] Scoutnet authentication failed for user %s. Status: %d, Error: %s, Detail: %s", 
+                    correlationId, username, response.statusCode(), errorType, errorDetail);
+                
+                AuthResult.AuthError authError = switch (response.statusCode()) {
+                    case 401, 403 -> AuthResult.AuthError.INVALID_CREDENTIALS;
+                    default -> AuthResult.AuthError.SERVICE_UNAVAILABLE;
+                };
+                return AuthResult.failure(authError);
             }
-            
-            return objectMapper.readValue(response.body(), AuthResponse.class);
+        } catch (java.net.http.HttpTimeoutException e) {
+            log.errorf("[%s] Scoutnet API timeout during authentication for user %s: %s", correlationId, username, e.getMessage());
+            return AuthResult.failure(AuthResult.AuthError.SERVICE_UNAVAILABLE);
+        } catch (java.net.ConnectException e) {
+            log.errorf("[%s] Cannot connect to Scoutnet API for user %s: %s", correlationId, username, e.getMessage());
+            return AuthResult.failure(AuthResult.AuthError.SERVICE_UNAVAILABLE);
         } catch (Exception e) {
-            log.error("Failed to communicate with Scoutnet API for authentication", e);
-            return null;
+            log.errorf("[%s] Unexpected error during Scoutnet authentication for user %s: %s", correlationId, username, e.getClass().getSimpleName());
+            return AuthResult.failure(AuthResult.AuthError.SERVICE_UNAVAILABLE);
         }
     }
 
@@ -80,7 +125,7 @@ public class ScoutnetClient {
      * @param token The bearer token from a successful authentication.
      * @return A Profile object, or null if the request fails.
      */
-    public Profile getProfile(String token) {
+    public Profile getProfile(String token, String correlationId) {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(PROFILE_URL))
@@ -93,14 +138,22 @@ public class ScoutnetClient {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             
             if (response.statusCode() != 200) {
-                log.warnf("Scoutnet profile fetch failed. Status: %d, Body: %s", 
-                    response.statusCode(), response.body());
+                String errorType = getErrorType(response.statusCode());
+                String errorDetail = tryParseErrorResponse(response.body());
+                log.warnf("[%s] Scoutnet profile fetch failed. Status: %d, Error: %s, Detail: %s", 
+                    correlationId, response.statusCode(), errorType, errorDetail);
                 return null;
             }
             
             return objectMapper.readValue(response.body(), Profile.class);
+        } catch (java.net.http.HttpTimeoutException e) {
+            log.errorf("[%s] Scoutnet API timeout during profile fetch: %s", correlationId, e.getMessage());
+            return null;
+        } catch (java.net.ConnectException e) {
+            log.errorf("[%s] Cannot connect to Scoutnet API for profile fetch: %s", correlationId, e.getMessage());
+            return null;
         } catch (Exception e) {
-            log.error("Failed to communicate with Scoutnet API for profile fetch", e);
+            log.errorf("[%s] Unexpected error during Scoutnet profile fetch: %s", correlationId, e.getClass().getSimpleName());
             return null;
         }
     }
@@ -109,7 +162,7 @@ public class ScoutnetClient {
      * Fetches the raw roles JSON structure from the API.
      * This structure will be parsed into a flattened list of roles later.
      */
-    public Roles getRoles(String token) {
+    public Roles getRoles(String token, String correlationId) {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(ROLES_URL))
@@ -122,14 +175,22 @@ public class ScoutnetClient {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             
             if (response.statusCode() != 200) {
-                log.warnf("Scoutnet roles fetch failed. Status: %d, Body: %s", 
-                    response.statusCode(), response.body());
+                String errorType = getErrorType(response.statusCode());
+                String errorDetail = tryParseErrorResponse(response.body());
+                log.warnf("[%s] Scoutnet roles fetch failed. Status: %d, Error: %s, Detail: %s", 
+                    correlationId, response.statusCode(), errorType, errorDetail);
                 return null;
             }
             
             return objectMapper.readValue(response.body(), Roles.class);
+        } catch (java.net.http.HttpTimeoutException e) {
+            log.errorf("[%s] Scoutnet API timeout during roles fetch: %s", correlationId, e.getMessage());
+            return null;
+        } catch (java.net.ConnectException e) {
+            log.errorf("[%s] Cannot connect to Scoutnet API for roles fetch: %s", correlationId, e.getMessage());
+            return null;
         } catch (Exception e) {
-            log.error("Failed to communicate with Scoutnet API for roles fetch", e);
+            log.errorf("[%s] Unexpected error during Scoutnet roles fetch: %s", correlationId, e.getClass().getSimpleName());
             return null;
         }
     }
@@ -140,7 +201,7 @@ public class ScoutnetClient {
      * @param token The bearer token.
      * @return byte[] containing the compressed JPEG image data, or null if not found.
      */
-    public byte[] getProfileImage(String token) {
+    public byte[] getProfileImage(String token, String correlationId) {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(PROFILE_IMAGE_URL))
@@ -154,14 +215,24 @@ public class ScoutnetClient {
             if (response.statusCode() == 200) {
                 return processImage(response.body());
             } else if (response.statusCode() == 404) {
-                log.debug("No profile image found for user.");
+                log.debugf("[%s] No profile image found for user.", correlationId);
                 return null;
             } else {
-                log.warnf("Scoutnet profile image fetch failed. Status: %d", response.statusCode());
+                String errorType = getErrorType(response.statusCode());
+                log.warnf("[%s] Scoutnet profile image fetch failed. Status: %d, Error: %s", correlationId, response.statusCode(), errorType);
                 return null;
             }
+        } catch (java.net.http.HttpTimeoutException e) {
+            log.errorf("[%s] Scoutnet API timeout during profile image fetch: %s", correlationId, e.getMessage());
+            return null;
+        } catch (java.net.ConnectException e) {
+            log.errorf("[%s] Cannot connect to Scoutnet API for profile image fetch: %s", correlationId, e.getMessage());
+            return null;
+        } catch (IOException e) {
+            log.errorf("[%s] Image processing error: %s", correlationId, e.getMessage());
+            return null;
         } catch (Exception e) {
-            log.error("Failed to communicate with Scoutnet API for profile image fetch", e);
+            log.errorf("[%s] Unexpected error during profile image fetch: %s", correlationId, e.getClass().getSimpleName());
             return null;
         }
     }
@@ -204,7 +275,7 @@ public class ScoutnetClient {
             return baos.toByteArray();
 
         } catch (IOException e) {
-            log.error("Error processing profile image", e);
+            log.errorf("Error processing profile image: %s", e.getMessage());
             return null; // Fail gracefully
         }
     }

@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Keycloak Authenticator that validates credentials against an external Scoutnet API.
@@ -54,40 +55,51 @@ public class ScoutnetAuthenticator implements Authenticator {
      */
     @Override
     public void action(AuthenticationFlowContext context) {
-        log.info("Processing submitted login form for Scoutnet authentication.");
+        String correlationId = UUID.randomUUID().toString().substring(0, 8);
+        log.infof("[%s] Processing submitted login form for Scoutnet authentication.", correlationId);
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         String username = formData.getFirst("username");
         String password = formData.getFirst("password");
 
         // Basic validation
         if (username == null || username.trim().isEmpty() || password == null || password.isEmpty()) {
-            failAuthentication(context, username, "Please provide both a username and a password.");
+            failAuthentication(context, username, "Please provide both a username and a password.", correlationId);
             return;
         }
 
-        // Step 1: Authenticate and get the token
-        AuthResponse authResponse = scoutnetClient.authenticate(username, password);
-        if (authResponse == null || authResponse.getToken() == null || authResponse.getToken().isEmpty()) {
-            failAuthentication(context, username, "Invalid username or password.");
+        // Step 1: Authenticate and get a token
+        AuthResult authResult = scoutnetClient.authenticate(username, password, correlationId);
+        if (!authResult.isSuccess()) {
+            String messageKey = authResult.getError() == AuthResult.AuthError.INVALID_CREDENTIALS 
+                ? "invalidUserMessage" 
+                : "loginTimeout";
+            failAuthentication(context, username, messageKey, correlationId);
+            return;
+        }
+        
+        AuthResponse authResponse = authResult.getAuthResponse();
+        if (authResponse.getToken() == null || authResponse.getToken().isEmpty()) {
+            failAuthentication(context, username, "loginTimeout", correlationId);
             return;
         }
 
         // Step 2: Use the token to fetch the full profile
-        Profile profile = scoutnetClient.getProfile(authResponse.getToken());
+        Profile profile = scoutnetClient.getProfile(authResponse.getToken(), correlationId);
         if (profile == null) {
-            failAuthentication(context, username, "Could not retrieve user profile from Scoutnet after successful login.");
+            String errorMsg = String.format("Could not retrieve user profile from Scoutnet after successful login for user: %s", username);
+            failAuthentication(context, username, errorMsg, correlationId);
             return;
         }
 
         // Step 2b: Fetch profile image (non-blocking failure - if image fails, we still proceed)
-        // byte[] profileImage = scoutnetClient.getProfileImage(authResponse.getToken());
+        // byte[] profileImage = scoutnetClient.getProfileImage(authResponse.getToken(), correlationId);
         byte[] profileImage = null;
 
         // Step 2c: Fetch roles information from user (non-blocking)
-        Roles roles = scoutnetClient.getRoles(authResponse.getToken());
+        Roles roles = scoutnetClient.getRoles(authResponse.getToken(), correlationId);
 
         if (roles == null) {
-            log.infof("Could not retrieve user roles from Scoutnet after successful login.");
+            log.infof("[%s] Could not retrieve user roles from Scoutnet after successful login.", correlationId);
         }
 
         // Step 3: Find or create the Keycloak user
@@ -95,11 +107,11 @@ public class ScoutnetAuthenticator implements Authenticator {
         UserModel user = KeycloakModelUtils.findUserByNameOrEmail(context.getSession(), context.getRealm(), keycloakUsername);
 
         if (user == null) {
-            log.infof("First time login for Scoutnet user: %d. Creating new Keycloak user: %s.", profile.getMemberNo(), keycloakUsername);
+            log.infof("[%s] First time login for Scoutnet user: %d. Creating new Keycloak user: %s.", correlationId, profile.getMemberNo(), keycloakUsername);
             user = context.getSession().users().addUser(context.getRealm(), keycloakUsername);
             user.setEnabled(true);
         } else {
-            log.infof("Updating existing Keycloak user: %s from Scoutnet profile.", keycloakUsername);
+            log.infof("[%s] Updating existing Keycloak user: %s from Scoutnet profile.", correlationId, keycloakUsername);
         }
 
         // Step 4: Update the user with the rich profile data
@@ -107,6 +119,7 @@ public class ScoutnetAuthenticator implements Authenticator {
 
         context.setUser(user);
         context.getAuthenticationSession().removeAuthNote("username");
+        log.infof("[%s] Authentication successful for user: %s", correlationId, keycloakUsername);
         context.success();
     }
 
@@ -228,12 +241,12 @@ public class ScoutnetAuthenticator implements Authenticator {
 
     /**
      * Helper to log and return an error challenge to the user.
-     * (Helper method imported from the user_creation branch)
      */
-    private void failAuthentication(AuthenticationFlowContext context, String username, String error) {
+    private void failAuthentication(AuthenticationFlowContext context, String username, String messageKey, String correlationId) {
+        log.errorf("[%s] Authentication failed for user %s: %s", correlationId, username, messageKey);
         context.getEvent().user(username).error("invalid_grant");
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS,
-            context.form().setError(error).createLoginUsernamePassword());
+            context.form().setError(messageKey).createLoginUsernamePassword());
     }
 
     // --- Boilerplate methods unchanged ---
