@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.5.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.4.1...v0.5.0) (2025-12-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* username convention updated
+
+### Features
+
+* add scouterna epost field ([e7a12c4](https://github.com/Scouterna/scoutid-keycloak-provider/commit/e7a12c4db66b43885986a970f4b2e17a0686d0c7))
+* improved logging and error tracing ([2af9773](https://github.com/Scouterna/scoutid-keycloak-provider/commit/2af97739e1a0290ddb57e17fdc34a4942065c565))
+* parse non-compliant personnummer format ([0e6e3f2](https://github.com/Scouterna/scoutid-keycloak-provider/commit/0e6e3f2c7eb95360929704284e6e3de89326415c))
+* set scoutnet url as env variable ([4531bf8](https://github.com/Scouterna/scoutid-keycloak-provider/commit/4531bf88e896a82617c8ff8f6eb367c7026eb817))
+
+
+### Bug Fixes
+
+* integration tests incl docs ([63c7314](https://github.com/Scouterna/scoutid-keycloak-provider/commit/63c731407fb3da5848b1241f1cbe7c5a3526d0fa))
+* username convention updated ([a5be45c](https://github.com/Scouterna/scoutid-keycloak-provider/commit/a5be45cc3f2958453c0e239e837b5ee96117c20e))
+
+
+### Performance Improvements
+
+* optimize HTTP client for high-concurrency scenarios ([d2837fd](https://github.com/Scouterna/scoutid-keycloak-provider/commit/d2837fdd5ac12fd86ddb9a91782e3add6cb91623))
+
+
+### Documentation
+
+* gitignore for tmp folder ([3449228](https://github.com/Scouterna/scoutid-keycloak-provider/commit/3449228542d447ea9069abadfe06abdc17c272dc))
+* update config example ([65382b3](https://github.com/Scouterna/scoutid-keycloak-provider/commit/65382b32baf5734773bf3883a681adcfa6f7e98f))
+
 ## [0.4.1](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.4.0...v0.4.1) (2025-12-14)
 
 
