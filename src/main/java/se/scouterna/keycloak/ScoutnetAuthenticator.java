@@ -35,10 +35,24 @@ public class ScoutnetAuthenticator implements Authenticator {
 
     private static final Logger log = Logger.getLogger(ScoutnetAuthenticator.class);
     private final ScoutnetClient scoutnetClient;
+    private static final String PROVIDER_VERSION = getProviderVersion();
 
     // Initialize the client via the constructor (from the user_creation branch)
     public ScoutnetAuthenticator() {
         this.scoutnetClient = new ScoutnetClient();
+    }
+    
+    private static String getProviderVersion() {
+        String version = ScoutnetAuthenticator.class.getPackage().getImplementationVersion();
+        Logger logger = Logger.getLogger(ScoutnetAuthenticator.class);
+        
+        if (version != null) {
+            logger.infof("ScoutID provider version: %s", version);
+            return version;
+        } else {
+            logger.infof("ScoutID version unknown (no manifest version found)");
+            return "dev";
+        }
     }
     
     /**
@@ -209,6 +223,9 @@ public class ScoutnetAuthenticator implements Authenticator {
     private String generateProfileHash(String profileJson, String rolesJson, byte[] imageBytes) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            
+            // Add provider version to force rehash when mappings change
+            digest.update(PROVIDER_VERSION.getBytes(StandardCharsets.UTF_8));
             
             // Remove last_login from JSON before hashing
             String cleanedJson = profileJson.replaceAll(",?\\s*\"last_login\"\\s*:\\s*\"[^\"]*\"", "");
