@@ -13,6 +13,9 @@ import se.scouterna.keycloak.client.ScoutnetClient;
 import se.scouterna.keycloak.client.dto.*; // Added rich profile DTOs
 
 import java.time.LocalDate;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -91,9 +94,18 @@ public class ScoutnetAuthenticator implements Authenticator {
         }
 
         // Step 2: Use the token to fetch the full profile
-        Profile profile = scoutnetClient.getProfile(authResponse.getToken(), correlationId);
-        if (profile == null) {
+        String profileJson = scoutnetClient.getProfileJson(authResponse.getToken(), correlationId);
+        if (profileJson == null) {
             String errorMsg = String.format("Could not retrieve user profile from Scoutnet after successful login for user: %s", username);
+            failAuthentication(context, username, errorMsg, correlationId);
+            return;
+        }
+        
+        Profile profile;
+        try {
+            profile = new com.fasterxml.jackson.databind.ObjectMapper().readValue(profileJson, Profile.class);
+        } catch (Exception e) {
+            String errorMsg = String.format("Could not parse user profile from Scoutnet after successful login for user: %s", username);
             failAuthentication(context, username, errorMsg, correlationId);
             return;
         }
@@ -103,9 +115,17 @@ public class ScoutnetAuthenticator implements Authenticator {
         byte[] profileImage = null;
 
         // Step 2c: Fetch roles information from user (non-blocking)
-        Roles roles = scoutnetClient.getRoles(authResponse.getToken(), correlationId);
-
-        if (roles == null) {
+        String rolesJson = scoutnetClient.getRolesJson(authResponse.getToken(), correlationId);
+        Roles roles = null;
+        if (rolesJson != null) {
+            try {
+                roles = new com.fasterxml.jackson.databind.ObjectMapper()
+                    .configure(com.fasterxml.jackson.databind.DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true)
+                    .readValue(rolesJson, Roles.class);
+            } catch (Exception e) {
+                log.warnf("[%s] Could not parse user roles from Scoutnet: %s", correlationId, e.getMessage());
+            }
+        } else {
             log.infof("[%s] Could not retrieve user roles from Scoutnet after successful login.", correlationId);
         }
 
@@ -118,11 +138,11 @@ public class ScoutnetAuthenticator implements Authenticator {
             user = context.getSession().users().addUser(context.getRealm(), keycloakUsername);
             user.setEnabled(true);
         } else {
-            log.infof("[%s] Updating existing Keycloak user: %s from Scoutnet profile.", correlationId, keycloakUsername);
+            log.debugf("[%s] Found existing Keycloak user: %s, checking for profile updates.", correlationId, keycloakUsername);
         }
 
         // Step 4: Update the user with the rich profile data
-        updateUserFromProfile(user, profile, profileImage, roles);
+        updateUserFromProfile(user, profile, profileJson, rolesJson, profileImage, roles);
 
         context.setUser(user);
         context.getAuthenticationSession().removeAuthNote("username");
@@ -130,41 +150,44 @@ public class ScoutnetAuthenticator implements Authenticator {
         context.success();
     }
 
-    private void updateUserFromProfile(UserModel user, Profile profile, byte[] imageBytes, Roles roles) {
-        // --- Basic Info ---
+    private void updateUserFromProfile(UserModel user, Profile profile, String profileJson, String rolesJson, byte[] imageBytes, Roles roles) {
+        // Generate hash of current profile data (excluding last_login)
+        String newProfileHash = generateProfileHash(profileJson, rolesJson, imageBytes);
+        String currentProfileHash = user.getFirstAttribute("scoutnet_profile_hash");
+        
+        // Skip update if profile hasn't changed
+        if (newProfileHash.equals(currentProfileHash)) {
+            log.debugf("Profile hash unchanged (%s), skipping database update for user: %s", 
+                newProfileHash.substring(0, 8), user.getUsername());
+            return;
+        }
+
+        log.infof("Profile hash changed (old: %s, new: %s), updating database for user: %s", 
+            currentProfileHash != null ? currentProfileHash.substring(0, 8) : "null", 
+            newProfileHash.substring(0, 8), user.getUsername());
+
+        // Update all profile data
         user.setFirstName(profile.getFirstName());
         user.setLastName(profile.getLastName());
         user.setEmail(profile.getEmail());
-
-        // --- Custom Attributes ---
         user.setSingleAttribute("scoutnet_member_no", String.valueOf(profile.getMemberNo()));
         user.setSingleAttribute("scoutnet_dob", profile.getDob());
         
-        // --- Scouterna Email ---
         String scouternaEmail = profile.getScouternaEmail();
         if (scouternaEmail != null && !scouternaEmail.trim().isEmpty()) {
             user.setSingleAttribute("scouterna_email", scouternaEmail);
         }
 
-        // --- OIDC Picture ---
         if (imageBytes != null && imageBytes.length > 0) {
             String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-            // We use the standard OIDC attribute name "picture".
-            // We prepend the data URI scheme so clients use it directly as <img src="...">
-            // We forced the format to JPEG in the client.
             user.setSingleAttribute("picture", "data:image/jpeg;base64," + base64Image);
         }
 
-        // --- Roles ---
         if (roles != null) {
             List<String> roleList = parseAndFlattenRoles(roles);
-            
-            // This is the correct method call: setting the final list of strings
-            // for the custom attribute named "roles".
-            user.setAttribute("roles", roleList); 
+            user.setAttribute("roles", roleList);
         }
 
-        // --- Memberships ---
         if (profile.getMemberships() != null && profile.getMemberships().getGroup() != null) {
             profile.getMemberships().getGroup().values().stream()
                 .filter(GroupMembership::isPrimary)
@@ -176,6 +199,38 @@ public class ScoutnetAuthenticator implements Authenticator {
                         user.setSingleAttribute("scoutnet_primary_group_no", String.valueOf(group.getGroupNo()));
                     }
                 });
+        }
+
+        // Store new hash
+        user.setSingleAttribute("scoutnet_profile_hash", newProfileHash);
+    }
+
+    private String generateProfileHash(String profileJson, String rolesJson, byte[] imageBytes) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            
+            // Remove last_login from JSON before hashing
+            String cleanedJson = profileJson.replaceAll(",?\\s*\"last_login\"\\s*:\\s*\"[^\"]*\"", "");
+            digest.update(cleanedJson.getBytes(StandardCharsets.UTF_8));
+            
+            if (rolesJson != null) {
+                digest.update(rolesJson.getBytes(StandardCharsets.UTF_8));
+            }
+            
+            if (imageBytes != null) {
+                digest.update(String.valueOf(imageBytes.length).getBytes(StandardCharsets.UTF_8));
+            }
+            
+            byte[] hash = digest.digest();
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 not available", e);
         }
     }
 

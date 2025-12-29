@@ -135,6 +135,21 @@ public class ScoutnetClient {
      * @return A Profile object, or null if the request fails.
      */
     public Profile getProfile(String token, String correlationId) {
+        String profileJson = getProfileJson(token, correlationId);
+        if (profileJson == null) return null;
+        
+        try {
+            return SHARED_OBJECT_MAPPER.readValue(profileJson, Profile.class);
+        } catch (Exception e) {
+            log.errorf("[%s] Failed to parse profile JSON: %s", correlationId, e.getClass().getSimpleName());
+            return null;
+        }
+    }
+    
+    /**
+     * Fetches the raw profile JSON for hashing purposes.
+     */
+    public String getProfileJson(String token, String correlationId) {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(PROFILE_URL))
@@ -154,7 +169,7 @@ public class ScoutnetClient {
                 return null;
             }
             
-            return SHARED_OBJECT_MAPPER.readValue(response.body(), Profile.class);
+            return response.body();
         } catch (java.net.http.HttpTimeoutException e) {
             log.errorf("[%s] Scoutnet API timeout during profile fetch: %s", correlationId, e.getMessage());
             return null;
@@ -172,6 +187,21 @@ public class ScoutnetClient {
      * This structure will be parsed into a flattened list of roles later.
      */
     public Roles getRoles(String token, String correlationId) {
+        String rolesJson = getRolesJson(token, correlationId);
+        if (rolesJson == null) return null;
+        
+        try {
+            return SHARED_OBJECT_MAPPER.readValue(rolesJson, Roles.class);
+        } catch (Exception e) {
+            log.errorf("[%s] Failed to parse roles JSON: %s", correlationId, e.getClass().getSimpleName());
+            return null;
+        }
+    }
+    
+    /**
+     * Fetches the raw roles JSON for hashing purposes.
+     */
+    public String getRolesJson(String token, String correlationId) {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(ROLES_URL))
@@ -191,7 +221,7 @@ public class ScoutnetClient {
                 return null;
             }
             
-            return SHARED_OBJECT_MAPPER.readValue(response.body(), Roles.class);
+            return response.body();
         } catch (java.net.http.HttpTimeoutException e) {
             log.errorf("[%s] Scoutnet API timeout during roles fetch: %s", correlationId, e.getMessage());
             return null;

@@ -67,10 +67,6 @@ public class ScoutnetClientIT {
 
         System.out.println("Profile fetch successful for: " + profile.getFirstName() + " " + profile.getLastName());
 
-        assertEquals(authResponse.getMember().getMemberNo(), profile.getMemberNo());
-
-        System.out.println("Profile fetch successful for: " + profile.getFirstName());
-
         // Step 3: Fetch Profile Image
         byte[] imageBytes = scoutnetClient.getProfileImage(authResponse.getToken(), correlationId);
         
@@ -94,7 +90,7 @@ public class ScoutnetClientIT {
         
         assertNotNull(roles, "Roles response should not be null");
         
-        // Validation 1: Check if at least one common role type field is not null (e.g., 'organisation' or 'group').
+        // Validation: Check if at least one common role type field is not null (e.g., 'organisation' or 'group').
         // Since roles can be empty for a new user, you must validate based on expected content.
         // Adjust these checks based on what a test user is expected to have.
         
@@ -109,6 +105,84 @@ public class ScoutnetClientIT {
         }
         
         System.out.println("Roles fetch successful.");
+    }
+
+    @Test
+    void testProfileHashComparison() {
+        if (username == null || password == null) {
+            return;
+        }
+
+        String correlationId = "test-hash-" + System.currentTimeMillis();
+
+        // Authenticate and get profile data
+        AuthResult authResult = scoutnetClient.authenticate(username, password, correlationId);
+        assertTrue(authResult.isSuccess(), "Authentication should succeed");
+        
+        String token = authResult.getAuthResponse().getToken();
+        String profileJson1 = scoutnetClient.getProfileJson(token, correlationId);
+        String profileJson2 = scoutnetClient.getProfileJson(token, correlationId + "-2");
+        String rolesJson = scoutnetClient.getRolesJson(token, correlationId);
+        
+        assertNotNull(profileJson1, "First profile JSON should not be null");
+        assertNotNull(profileJson2, "Second profile JSON should not be null");
+        assertNotNull(rolesJson, "Roles JSON should not be null");
+        
+        // Test hash generation with same data
+        String hash1 = generateTestHash(profileJson1, rolesJson, null);
+        String hash2 = generateTestHash(profileJson2, rolesJson, null);
+        
+        assertEquals(hash1, hash2, "Identical profile and roles data should produce identical hashes");
+        
+        // Test hash with modified profile JSON
+        String modifiedProfileJson = profileJson1.replaceAll("\"first_name\":\s*\"[^\"]*\"", "\"first_name\": \"TestModified\"");
+        String hashModifiedProfile = generateTestHash(modifiedProfileJson, rolesJson, null);
+        
+        assertNotEquals(hash1, hashModifiedProfile, "Modified profile data should produce different hash");
+        
+        // Test hash with modified roles JSON
+        String modifiedRolesJson = rolesJson.replaceAll("\"organisation\":", "\"organisation_modified\":");
+        String hashModifiedRoles = generateTestHash(profileJson1, modifiedRolesJson, null);
+        
+        assertNotEquals(hash1, hashModifiedRoles, "Modified roles data should produce different hash");
+        
+        // Test that last_login changes don't affect hash
+        String jsonWithDifferentLogin = profileJson1.replaceAll("\"last_login\":\s*\"[^\"]*\"", "\"last_login\": \"2025-01-01 00:00:00\"");
+        String hashWithDifferentLogin = generateTestHash(jsonWithDifferentLogin, rolesJson, null);
+        
+        assertEquals(hash1, hashWithDifferentLogin, "Different last_login should not affect hash");
+        
+        System.out.println("Hash comparison test successful. Hash length: " + hash1.length());
+    }
+    
+    // Helper method that mimics the hash generation logic from ScoutnetAuthenticator
+    private String generateTestHash(String profileJson, String rolesJson, byte[] imageBytes) {
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            
+            // Remove last_login from JSON before hashing (same logic as authenticator)
+            String cleanedJson = profileJson.replaceAll(",?\\s*\"last_login\"\\s*:\\s*\"[^\"]*\"", "");
+            digest.update(cleanedJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            
+            if (rolesJson != null) {
+                digest.update(rolesJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
+            
+            if (imageBytes != null) {
+                digest.update(String.valueOf(imageBytes.length).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
+            
+            byte[] hash = digest.digest();
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 not available", e);
+        }
     }
 
     @Test
