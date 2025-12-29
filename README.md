@@ -80,6 +80,90 @@ Add to token introspection: On
 Multivalued: Off
 Aggregate attribute values: Off
 
+## Debugging and Development
+
+### Debugging authentication issues
+
+1. **Run integration tests first** to verify basic functionality:
+   ```bash
+   # Set credentials and run tests
+   export SCOUTNET_USERNAME=your-personnummer-or-email
+   export SCOUTNET_PASSWORD=your-scoutnet-password
+   export SCOUTNET_BASE_URL=https://scoutnet.se # Optional, defaults to https://scoutnet.se
+   ./mvnw verify
+   ```
+   This will test the core authentication logic without requiring a full Keycloak setup.
+
+2. **Test with full local Keycloak setup**:
+   ```bash
+   # Compile the provider
+   ./mvnw clean package
+   
+   # Start Keycloak with your compiled provider
+   docker compose up
+   ```
+   Then test login at: http://localhost:8080/realms/master/account
+
+   If this is your first time running the docker container, you need to follow the [above setup instructions](#using-the-scoutnet-based-custom-authentication) first.
+
+3. **Check Keycloak logs** for correlation IDs and error details:
+   ```bash
+   docker compose logs -f keycloak
+   ```
+
+4. **Enable debug logging** by adding to `docker-compose.yml`:
+   ```yaml
+   environment:
+     KC_LOG_LEVEL: DEBUG
+   ```
+
+5. **Common error patterns**:
+   - `404 Not Found`: API endpoint doesn't exist (check SCOUTNET_BASE_URL)
+   - `invalidUserMessage`: Wrong credentials or user not found
+   - `loginTimeout`: Service unavailable or network issues
+
+### VS Code Setup
+
+1. **Install required extensions**:
+   - [Extension Pack for Java](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack) (includes Language Support, Debugger, Test Runner, Maven, and Project Manager)
+   - [Docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker) (for managing Docker Compose)
+
+2. **Open the project**:
+   ```bash
+   code scoutid-keycloak-provider
+   ```
+
+3. **Configure Java**:
+   - Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
+   - Type "Java: Configure Java Runtime"
+   - Set Java 21 as the project JDK
+
+4. **Verify setup**:
+   - Open `src/main/java/se/scouterna/keycloak/ScoutnetAuthenticator.java`
+   - Check that there are no red error underlines
+   - The status bar should show "Java 21" in the bottom right
+
+5. **Run tests in VS Code**:
+   - Open the Test Explorer (Testing icon in sidebar)
+   - Set environment variables in `.vscode/settings.json`:
+     ```json
+     {
+       "java.test.config": {
+         "env": {
+           "SCOUTNET_USERNAME": "your-personnummer-or-email",
+           "SCOUTNET_PASSWORD": "your-scoutnet-password",
+           "SCOUTNET_BASE_URL": "https://scoutnet.se"
+         }
+       }
+     }
+     ```
+   - Click the play button next to `ScoutnetClientIT` to run integration tests
+
+6. **Build and debug**:
+   - Use `Ctrl+Shift+P` → "Java: Rebuild Projects" to compile
+   - Set breakpoints by clicking in the gutter next to line numbers
+   - Use F5 to start debugging tests
+
 ## Commits and releases
 
 This repository uses

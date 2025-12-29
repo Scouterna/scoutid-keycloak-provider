@@ -25,10 +25,8 @@ public class ScoutnetClientIT {
     void setUp() {
         scoutnetClient = new ScoutnetClient();
         // Read credentials from environment variables for security
-        // username = System.getenv("SCOUTNET_USERNAME");
-        // password = System.getenv("SCOUTNET_PASSWORD");
-        username = "teo.elmfeldt@malarscouterna.se";
-        password = "MultiKulti11";
+        username = System.getenv("SCOUTNET_USERNAME");
+        password = System.getenv("SCOUTNET_PASSWORD");
 
         if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
             // This will cause tests that need credentials to be skipped

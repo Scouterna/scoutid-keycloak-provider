@@ -99,7 +99,7 @@ public class ScoutnetClient {
             } else {
                 String errorType = getErrorType(response.statusCode());
                 String errorDetail = tryParseErrorResponse(response.body());
-                log.warnf("[%s] Scoutnet authentication failed for user %s. Status: %d, Error: %s, Detail: %s", 
+                log.debugf("[%s] Scoutnet authentication failed for user %s. Status: %d, Error: %s, Detail: %s", 
                     correlationId, username, response.statusCode(), errorType, errorDetail);
                 
                 AuthResult.AuthError authError = switch (response.statusCode()) {

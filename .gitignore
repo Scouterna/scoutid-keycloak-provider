@@ -47,3 +47,4 @@ certs/
 
 # Local temporary files
 tmp/
+.vscode/
