@@ -163,6 +163,27 @@
       "multivalued": false
     },
     {
+      "name": "scoutid_local_email",
+      "displayName": "ScoutID local email",
+      "validations": {
+        "email": {},
+        "length": {
+          "max": 255
+        }
+      },
+      "annotations": {},
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
+    },
+    {
       "name": "firstName",
       "displayName": "${firstName}",
       "validations": {

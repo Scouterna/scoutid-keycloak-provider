@@ -40,7 +40,7 @@ public class ScoutnetAuthenticator implements Authenticator {
     public ScoutnetAuthenticator() {
         this.scoutnetClient = new ScoutnetClient();
     }
-
+    
     /**
      * This method is called when the authenticator is first executed in the flow.
      * Its ONLY job is to display the username and password form to the user.
@@ -172,6 +172,7 @@ public class ScoutnetAuthenticator implements Authenticator {
         user.setEmail(profile.getEmail());
         user.setSingleAttribute("scoutnet_member_no", String.valueOf(profile.getMemberNo()));
         user.setSingleAttribute("scoutnet_dob", profile.getDob());
+        user.setSingleAttribute("scoutid_local_email", profile.getScoutIdLocalEmail());
         
         String scouternaEmail = profile.getScouternaEmail();
         if (scouternaEmail != null && !scouternaEmail.trim().isEmpty()) {

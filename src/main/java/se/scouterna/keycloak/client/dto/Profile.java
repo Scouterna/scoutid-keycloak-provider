@@ -64,4 +64,12 @@ public class Profile {
     public String getScouternaEmail() {
         return getContactInfoByKey("scouterna-email");
     }
+    
+    /**
+     * Generates a fake local email address for systems that require email mapping
+     * Format: memberno@scoutid.local (e.g., 3169207@scoutid.local)
+     */
+    public String getScoutIdLocalEmail() {
+        return memberNo + "@scoutid.local";
+    }
 }
