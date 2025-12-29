@@ -34,16 +34,24 @@ public class ScoutnetClient {
     
     // Max width/height for the avatar to keep the OIDC token size manageable
     private static final int TARGET_IMAGE_SIZE = 128;
+    
+    // Shared HttpClient with optimized connection pool for high-load scenarios
+    private static final HttpClient SHARED_HTTP_CLIENT = HttpClient.newBuilder()
+        .connectTimeout(Duration.ofSeconds(5)) // Reduced for faster failure detection
+        .executor(java.util.concurrent.ForkJoinPool.commonPool())
+        .version(HttpClient.Version.HTTP_2) // Use HTTP/2 for better performance
+        .build();
 
-    private final HttpClient httpClient;
-    private final ObjectMapper objectMapper;
+    // Connection pool is managed by the underlying implementation
+    // Default pool size is typically 2 per destination, but HTTP/2 multiplexes requests
+    // For high load, consider using a custom executor with more threads
+
+    // Shared ObjectMapper for thread safety and performance
+    private static final ObjectMapper SHARED_OBJECT_MAPPER = new ObjectMapper()
+        .configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true);
 
     public ScoutnetClient() {
-        this.httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
-            .build();
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true);
+        // No instance variables needed - everything is static
     }
 
     private String getErrorType(int statusCode) {
@@ -67,7 +75,7 @@ public class ScoutnetClient {
         }
         
         try {
-            ErrorResponse errorResponse = objectMapper.readValue(responseBody, ErrorResponse.class);
+            ErrorResponse errorResponse = SHARED_OBJECT_MAPPER.readValue(responseBody, ErrorResponse.class);
             return errorResponse.getSafeErrorMessage();
         } catch (Exception e) {
             // If we can't parse as ErrorResponse, return a safe truncated version
@@ -81,20 +89,20 @@ public class ScoutnetClient {
             payload.put("username", username);
             payload.put("password", password);
 
-            String jsonPayload = objectMapper.writeValueAsString(payload);
+            String jsonPayload = SHARED_OBJECT_MAPPER.writeValueAsString(payload);
             
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(AUTH_URL))
                 .header("Content-Type", "application/json")
                 .header("Accept", "application/json")
-                .timeout(Duration.ofSeconds(30))
+                .timeout(Duration.ofSeconds(10)) // Reduced from 30s for faster failure detection
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                 .build();
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = SHARED_HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             
             if (response.statusCode() == 200) {
-                AuthResponse authResponse = objectMapper.readValue(response.body(), AuthResponse.class);
+                AuthResponse authResponse = SHARED_OBJECT_MAPPER.readValue(response.body(), AuthResponse.class);
                 return AuthResult.success(authResponse);
             } else {
                 String errorType = getErrorType(response.statusCode());
@@ -132,11 +140,11 @@ public class ScoutnetClient {
                 .uri(URI.create(PROFILE_URL))
                 .header("Authorization", "Bearer " + token)
                 .header("Accept", "application/json")
-                .timeout(Duration.ofSeconds(30))
+                .timeout(Duration.ofSeconds(10))
                 .GET()
                 .build();
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = SHARED_HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             
             if (response.statusCode() != 200) {
                 String errorType = getErrorType(response.statusCode());
@@ -146,7 +154,7 @@ public class ScoutnetClient {
                 return null;
             }
             
-            return objectMapper.readValue(response.body(), Profile.class);
+            return SHARED_OBJECT_MAPPER.readValue(response.body(), Profile.class);
         } catch (java.net.http.HttpTimeoutException e) {
             log.errorf("[%s] Scoutnet API timeout during profile fetch: %s", correlationId, e.getMessage());
             return null;
@@ -169,11 +177,11 @@ public class ScoutnetClient {
                 .uri(URI.create(ROLES_URL))
                 .header("Authorization", "Bearer " + token)
                 .header("Accept", "application/json")
-                .timeout(Duration.ofSeconds(30))
+                .timeout(Duration.ofSeconds(10))
                 .GET()
                 .build();
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = SHARED_HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             
             if (response.statusCode() != 200) {
                 String errorType = getErrorType(response.statusCode());
@@ -183,7 +191,7 @@ public class ScoutnetClient {
                 return null;
             }
             
-            return objectMapper.readValue(response.body(), Roles.class);
+            return SHARED_OBJECT_MAPPER.readValue(response.body(), Roles.class);
         } catch (java.net.http.HttpTimeoutException e) {
             log.errorf("[%s] Scoutnet API timeout during roles fetch: %s", correlationId, e.getMessage());
             return null;
@@ -207,11 +215,11 @@ public class ScoutnetClient {
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(PROFILE_IMAGE_URL))
                 .header("Authorization", "Bearer " + token)
-                .timeout(Duration.ofSeconds(30))
+                .timeout(Duration.ofSeconds(15)) // Slightly longer for image download
                 .GET()
                 .build();
 
-            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+            HttpResponse<byte[]> response = SHARED_HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofByteArray());
             
             if (response.statusCode() == 200) {
                 return processImage(response.body());
