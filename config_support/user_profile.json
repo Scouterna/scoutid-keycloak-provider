@@ -142,6 +142,27 @@
       "multivalued": true
     },
     {
+      "name": "scouterna_email",
+      "displayName": "Scouterna e-post",
+      "validations": {
+        "email": {},
+        "length": {
+          "max": 255
+        }
+      },
+      "annotations": {},
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
+    },
+    {
       "name": "firstName",
       "displayName": "${firstName}",
       "validations": {

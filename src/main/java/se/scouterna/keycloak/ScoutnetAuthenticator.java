@@ -139,6 +139,12 @@ public class ScoutnetAuthenticator implements Authenticator {
         // --- Custom Attributes ---
         user.setSingleAttribute("scoutnet_member_no", String.valueOf(profile.getMemberNo()));
         user.setSingleAttribute("scoutnet_dob", profile.getDob());
+        
+        // --- Scouterna Email ---
+        String scouternaEmail = profile.getScouternaEmail();
+        if (scouternaEmail != null && !scouternaEmail.trim().isEmpty()) {
+            user.setSingleAttribute("scouterna_email", scouternaEmail);
+        }
 
         // --- OIDC Picture ---
         if (imageBytes != null && imageBytes.length > 0) {

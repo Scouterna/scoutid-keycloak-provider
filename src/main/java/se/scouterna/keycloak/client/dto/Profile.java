@@ -22,6 +22,8 @@ public class Profile {
     private Map<String, Address> addresses;
     @JsonProperty("memberships")
     private Memberships memberships;
+    @JsonProperty("contact_info")
+    private Map<String, Map<String, Object>> contactInfo;
 
     // Getters and Setters
     public int getMemberNo() { return memberNo; }
@@ -40,4 +42,26 @@ public class Profile {
     public void setAddresses(Map<String, Address> addresses) { this.addresses = addresses; }
     public Memberships getMemberships() { return memberships; }
     public void setMemberships(Memberships memberships) { this.memberships = memberships; }
+    public Map<String, Map<String, Object>> getContactInfo() { return contactInfo; }
+    public void setContactInfo(Map<String, Map<String, Object>> contactInfo) { this.contactInfo = contactInfo; }
+    
+    /**
+     * Generic helper to extract contact info by key
+     */
+    private String getContactInfoByKey(String key) {
+        if (contactInfo == null) return null;
+        
+        return contactInfo.values().stream()
+            .filter(contact -> key.equals(contact.get("key")))
+            .map(contact -> (String) contact.get("value"))
+            .findFirst()
+            .orElse(null);
+    }
+    
+    /**
+     * Extracts the Scouterna email from contact_info if it exists
+     */
+    public String getScouternaEmail() {
+        return getContactInfoByKey("scouterna-email");
+    }
 }
