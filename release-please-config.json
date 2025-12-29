@@ -4,7 +4,11 @@
   "packages": {
     ".": {
       "extra-files": [
-        "docker-compose.yml"
+        {
+          "type": "generic",
+          "path": "docker-compose.yml",
+          "glob": false
+        }
       ]
     }
   }
