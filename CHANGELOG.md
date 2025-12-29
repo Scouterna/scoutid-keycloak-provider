@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.5.0...v0.5.1) (2025-12-29)
+
+
+### Performance Improvements
+
+* optimize profile updates with SHA-256 hash-based change detection ([1fc6e16](https://github.com/Scouterna/scoutid-keycloak-provider/commit/1fc6e1654b8ec9f652ca4a944fa38e1623dede9e))
+
 ## [0.5.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.4.1...v0.5.0) (2025-12-29)
 
 
