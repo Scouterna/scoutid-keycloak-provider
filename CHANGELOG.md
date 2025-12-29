@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.5.1...v0.6.0) (2025-12-29)
+
+
+### Features
+
+* fake local email added as attribute ([2fde8a2](https://github.com/Scouterna/scoutid-keycloak-provider/commit/2fde8a252b6dab4606e1cf8921fbdc9663bbde50))
+
+
+### Bug Fixes
+
+* force reload profile on provider update ([b87e86a](https://github.com/Scouterna/scoutid-keycloak-provider/commit/b87e86a06d7e9ebc27f38b091a4ae70849e7f882))
+
 ## [0.5.1](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.5.0...v0.5.1) (2025-12-29)
 
 
