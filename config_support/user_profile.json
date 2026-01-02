@@ -50,6 +50,32 @@
       "multivalued": false
     },
     {
+      "name": "firstName",
+      "displayName": "${firstName}",
+      "validations": {
+        "length": {
+          "max": 255
+        },
+        "person-name-prohibited-characters": {}
+      },
+      "annotations": {},
+      "required": {
+        "roles": [
+          "user"
+        ]
+      },
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
+    },
+    {
       "name": "lastName",
       "displayName": "${lastName}",
       "validations": {
@@ -184,20 +210,10 @@
       "multivalued": false
     },
     {
-      "name": "firstName",
-      "displayName": "${firstName}",
-      "validations": {
-        "length": {
-          "max": 255
-        },
-        "person-name-prohibited-characters": {}
-      },
+      "name": "picture",
+      "displayName": "Profile picture",
+      "validations": {},
       "annotations": {},
-      "required": {
-        "roles": [
-          "user"
-        ]
-      },
       "permissions": {
         "view": [
           "admin",
@@ -210,8 +226,8 @@
       "multivalued": false
     },
     {
-      "name": "picture",
-      "displayName": "Profile picture",
+      "name": "firstlast",
+      "displayName": "first.last",
       "validations": {},
       "annotations": {},
       "permissions": {
