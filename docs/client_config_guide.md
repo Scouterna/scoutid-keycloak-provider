@@ -1,5 +1,7 @@
 # ScoutID Keycloak
 
+Denna instruktion riktar sig till dig som vill koppla in en klient på ScoutID.
+
 ## Om ScoutID Keycloak
 
 ScoutID Keycloak är Scouternas centrala identitetshanteringssystem som använder Keycloak för att hantera inloggningssessioner, Single Sign-On (SSO) och OIDC/SAML-klienter. Systemet autentiserar användare genom Scoutnets API med hjälp av en anpassad Keycloak-provider.
@@ -42,15 +44,26 @@ Du kan justera sessionstider per klient för att balansera användarvänlighet m
 
 För Google Workspace rekommenderas att använda ScoutID för SSO-inloggning tillsammans med automatisk användarsynkronisering.
 
-**SSO-konfiguration:**
-1. **Skapa ny klient** i Keycloak admin-konsolen
-2. **Client ID**: `google-workspace-[kårens-namn]`
-3. **Client Protocol**: `saml`
-4. **Valid Redirect URIs**: `https://accounts.google.com/o/saml2/initsso`
-
 **I Google Admin Console:**
 - Gå till Security > Authentication > SSO with third party IdP
 - Använd Keycloak SAML metadata URL
+- Ta rätt på SP details, där du behöver
+  - Entity ID
+  - ACS URL
+
+**SSO-konfiguration:**
+1. **Skapa ny klient** i Keycloak admin-konsolen
+2. **Client ID**: Entity ID från ovan
+3. **Client Protocol**: `saml`
+4. **Valid Redirect URIs**: ACS URL från ovan.
+
+Öppna klientinställningarna. 
+1. Under Client scopes välj länken med ditt client id.
+2. Configure a new mapper
+3. User attribute for NameID
+4. Sätt namn valfritt, Name ID Format till *:emailAddress och User Attribute till firstlast.
+
+
 
 **Användarsynkronisering:**
 För att automatiskt skapa och synkronisera användarkonton från Scoutnet till Google Workspace, använd [Google-Scoutnet-synk](https://github.com/Scouterna/Google-Scoutnet-synk).
@@ -184,13 +197,13 @@ https://dev.id.scouterna.se/realms/scoutnet/protocol/openid-connect/auth?
 
 ## Lokal utvecklingsmiljö
 
-För att sätta upp en egen lokal testmiljö för utveckling, se instruktionerna i [scoutid-keycloak-provider repository](https://github.com/Scouterna/scoutid-keycloak-provider).
+För att sätta upp en egen lokal testmiljö för att testa din klient mot, se instruktionerna i [scoutid-keycloak-provider repository](https://github.com/Scouterna/scoutid-keycloak-provider).
 
 **Lokal testmiljö:**
 1. Klona repositoryt och följ README-instruktionerna
 2. Starta med `docker compose up`
-3. **Admin-konsol**: https://localhost:8443/admin/
-4. **Test-inloggning**: https://localhost:8443/realms/master/account/
+3. **Admin-konsol**: https://localhost:8080/admin/
+4. **Test-inloggning**: https://localhost:8080/realms/master/account/
 5. **Inloggning**: admin/admin (för admin-konsolen)
 
 ### Testkonfiguration

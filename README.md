@@ -14,6 +14,8 @@
 This repository contains a custom provider for Keycloak to sign in with ScoutID,
 the Guides and Scouts of Sweden's membership system.
 
+If you want to setup a client, follow instructions in docs/client_config_guide.md.
+
 ## Running a local Keycloak instance
 
 This repo contains a Docker Compose project to quickly spin up a local Keycloak
