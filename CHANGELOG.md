@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.6.0...v0.7.0) (2026-01-02)
+
+
+### Features
+
+* add email-like first.last format ([0fefc7b](https://github.com/Scouterna/scoutid-keycloak-provider/commit/0fefc7bfe2027691cf02b39c0795faae1809247a))
+
+
+### Documentation
+
+* added first.last name format to example config ([75d51a4](https://github.com/Scouterna/scoutid-keycloak-provider/commit/75d51a430e706f74f64ce2c832209d8580613ca6))
+* clarified testing procedures ([083c68b](https://github.com/Scouterna/scoutid-keycloak-provider/commit/083c68b052b064c186a390e0c60b2a914fe4cf2b))
+
 ## [0.6.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.5.1...v0.6.0) (2025-12-29)
 
 
