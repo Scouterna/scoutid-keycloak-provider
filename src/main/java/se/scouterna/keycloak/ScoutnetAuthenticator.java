@@ -188,6 +188,11 @@ public class ScoutnetAuthenticator implements Authenticator {
         user.setSingleAttribute("scoutnet_dob", profile.getDob());
         user.setSingleAttribute("scoutid_local_email", profile.getScoutIdLocalEmail());
         
+        String firstLast = profile.getFirstLast();
+        if (firstLast != null && !firstLast.trim().isEmpty()) {
+            user.setSingleAttribute("firstlast", firstLast);
+        }
+        
         String scouternaEmail = profile.getScouternaEmail();
         if (scouternaEmail != null && !scouternaEmail.trim().isEmpty()) {
             user.setSingleAttribute("scouterna_email", scouternaEmail);
