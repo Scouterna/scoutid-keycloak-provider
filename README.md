@@ -84,7 +84,12 @@ Aggregate attribute values: Off
 
 ### Debugging authentication issues
 
-1. **Run integration tests first** to verify basic functionality:
+1. **Run unit tests** to verify consistent handling:
+   ```bash
+   # Run all unit tests
+   ./mvnw test
+
+2. **Run integration tests** to verify basic functionality:
    ```bash
    # Set credentials and run tests
    export SCOUTNET_USERNAME=your-personnummer-or-email
@@ -94,7 +99,7 @@ Aggregate attribute values: Off
    ```
    This will test the core authentication logic without requiring a full Keycloak setup.
 
-2. **Test with full local Keycloak setup**:
+3. **Test with full local Keycloak setup**:
    ```bash
    # Compile the provider
    ./mvnw clean package
@@ -103,6 +108,7 @@ Aggregate attribute values: Off
    docker compose up
    ```
    Then test login at: http://localhost:8080/realms/master/account
+   using username: admin, password: admin
 
    If this is your first time running the docker container, you need to follow the [above setup instructions](#using-the-scoutnet-based-custom-authentication) first.
 
