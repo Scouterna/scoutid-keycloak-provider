@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.1](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.7.0...v0.7.1) (2026-01-04)
+
+
+### Bug Fixes
+
+* simplified text normalisation ([cad46bf](https://github.com/Scouterna/scoutid-keycloak-provider/commit/cad46bf2f5d0de88dea1da2e6fdccee9b68a5463))
+
+
+### Documentation
+
+* client config update for Google workspace ([f04dccb](https://github.com/Scouterna/scoutid-keycloak-provider/commit/f04dccb6cde5ca3b48ad7746b9f1be10f56b1eda))
+* Include client configuration data ([4ae908d](https://github.com/Scouterna/scoutid-keycloak-provider/commit/4ae908d12adc12619f8937fb93d8ba9a2f191f81))
+
 ## [0.7.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.6.0...v0.7.0) (2026-01-02)
 
 
