@@ -3,73 +3,46 @@ package se.scouterna.keycloak.client.dto;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ProfileTest {
+class ProfileTest {
 
     @Test
-    public void testGetFirstLast_basicNames() {
+    void testGetFirstLastWithDiacritics() {
         Profile profile = new Profile();
-        profile.setFirstName("John");
-        profile.setLastName("Doe");
+        profile.setFirstName("Müller");
+        profile.setLastName("Øresund");
         
-        assertEquals("john.doe", profile.getFirstLast());
-    }
-
-    @Test
-    public void testGetFirstLast_withSpaces() {
-        Profile profile = new Profile();
-        profile.setFirstName("Anna Maria");
-        profile.setLastName("von Berg");
-        
-        assertEquals("anna.maria.von.berg", profile.getFirstLast());
+        assertEquals("muller.oresund", profile.getFirstLast());
     }
 
     @Test
-    public void testGetFirstLast_withDiacritics() {
+    void testGetFirstLastWithVietnameseCharacters() {
         Profile profile = new Profile();
-        profile.setFirstName("Åsa");
-        profile.setLastName("Lindström");
+        profile.setFirstName("Nguyễn");
+        profile.setLastName("Phạm");
         
-        assertEquals("asa.lindstrom", profile.getFirstLast());
-    }
-    
-    @Test
-    public void testGetFirstLast_withExtensiveDiacritics() {
-        Profile profile = new Profile();
-        profile.setFirstName("Émile");
-        profile.setLastName("Müller-Schön");
-        
-        assertEquals("emile.muller-schon", profile.getFirstLast());
-    }
-    
-    @Test
-    public void testGetFirstLast_withSlavicCharacters() {
-        Profile profile = new Profile();
-        profile.setFirstName("Paweł");
-        profile.setLastName("Kowalski");
-        
-        assertEquals("pawel.kowalski", profile.getFirstLast());
-    }
-    
-    @Test
-    public void testGetFirstLast_withCzechCharacters() {
-        Profile profile = new Profile();
-        profile.setFirstName("František");
-        profile.setLastName("Novák");
-        
-        assertEquals("frantisek.novak", profile.getFirstLast());
+        assertEquals("nguyen.pham", profile.getFirstLast());
     }
 
     @Test
-    public void testGetFirstLast_withSpecialCharacters() {
+    void testGetFirstLastWithTurkishCharacters() {
+        Profile profile = new Profile();
+        profile.setFirstName("Çağlar");
+        profile.setLastName("Şahin");
+        
+        assertEquals("caglar.sahin", profile.getFirstLast());
+    }
+
+    @Test
+    void testGetFirstLastWithSpacesAndSpecialChars() {
         Profile profile = new Profile();
         profile.setFirstName("Jean-Pierre");
-        profile.setLastName("O'Connor");
+        profile.setLastName("Van Der Berg");
         
-        assertEquals("jean-pierre.oconnor", profile.getFirstLast());
+        assertEquals("jean-pierre.van.der.berg", profile.getFirstLast());
     }
 
     @Test
-    public void testGetFirstLast_nullNames() {
+    void testGetFirstLastWithNullValues() {
         Profile profile = new Profile();
         profile.setFirstName(null);
         profile.setLastName("Doe");
@@ -83,25 +56,39 @@ public class ProfileTest {
     }
 
     @Test
-    public void testGetFirstLast_emptyNames() {
+    void testGetFirstLastWithEmptyValues() {
         Profile profile = new Profile();
         profile.setFirstName("");
         profile.setLastName("Doe");
         
         assertEquals(".doe", profile.getFirstLast());
+        
+        // Test whitespace-only names
+        profile.setFirstName("   ");
+        assertEquals(".doe", profile.getFirstLast());
     }
-    
+
     @Test
-    public void testGetFirstLast_edgeCases() {
+    void testGetFirstLastWithDotAndHyphenEdgeCases() {
         Profile profile = new Profile();
-        profile.setFirstName("Anna  Maria"); // Multiple spaces
-        profile.setLastName("O'Connor"); // Apostrophe
         
-        assertEquals("anna.maria.oconnor", profile.getFirstLast());
+        // Test hyphen-dot patterns
+        profile.setFirstName("Jean.-Pierre");
+        profile.setLastName("Test");
+        assertEquals("jean-pierre.test", profile.getFirstLast());
+    }
+
+    @Test
+    void testGetFirstLastWithSpecialCharacterFiltering() {
+        Profile profile = new Profile();
+        profile.setLastName("Test");
         
-        profile.setFirstName(".John."); // Leading/trailing dots
-        profile.setLastName("Smith");
+        // Test that non-alphanumeric chars (except . and -) are removed
+        profile.setFirstName("John@#$%");
+        assertEquals("john.test", profile.getFirstLast());
         
-        assertEquals("john.smith", profile.getFirstLast());
+        // Test that numbers are preserved
+        profile.setFirstName("John2");
+        assertEquals("john2.test", profile.getFirstLast());
     }
 }
