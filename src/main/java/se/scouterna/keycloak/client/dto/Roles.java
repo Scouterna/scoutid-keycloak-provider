@@ -57,4 +57,42 @@ public class Roles {
     public Map<String, Map<String, String>> getPatrol() {
         return patrol;
     }
+
+    // --- Setter Methods for Testing ---
+
+    public void setOrganisation(Map<String, Map<String, String>> organisation) {
+        this.organisation = organisation;
+    }
+
+    public void setRegion(Map<String, Map<String, String>> region) {
+        this.region = region;
+    }
+
+    public void setProject(Map<String, Map<String, String>> project) {
+        this.project = project;
+    }
+
+    public void setNetwork(Map<String, Map<String, String>> network) {
+        this.network = network;
+    }
+
+    public void setCorps(Map<String, Map<String, String>> corps) {
+        this.corps = corps;
+    }
+
+    public void setDistrict(Map<String, Map<String, String>> district) {
+        this.district = district;
+    }
+
+    public void setGroup(Map<String, Map<String, String>> group) {
+        this.group = group;
+    }
+
+    public void setTroop(Map<String, Map<String, String>> troop) {
+        this.troop = troop;
+    }
+
+    public void setPatrol(Map<String, Map<String, String>> patrol) {
+        this.patrol = patrol;
+    }
 }
