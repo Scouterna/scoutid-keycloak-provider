@@ -17,6 +17,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,11 +36,16 @@ public class ScoutnetAuthenticator implements Authenticator {
 
     private static final Logger log = Logger.getLogger(ScoutnetAuthenticator.class);
     private final ScoutnetClient scoutnetClient;
+    private final ScoutnetGroupManager groupManager;
     private static final String PROVIDER_VERSION = getProviderVersion();
+    
+    // Attributes to track for hash changes - must match ScoutnetGroupManager
+    private static final List<String> TRACKED_ATTRIBUTES = Arrays.asList("domain");
 
     // Initialize the client via the constructor (from the user_creation branch)
     public ScoutnetAuthenticator() {
         this.scoutnetClient = new ScoutnetClient();
+        this.groupManager = new ScoutnetGroupManager();
     }
     
     private static String getProviderVersion() {
@@ -156,7 +162,7 @@ public class ScoutnetAuthenticator implements Authenticator {
         }
 
         // Step 4: Update the user with the rich profile data
-        updateUserFromProfile(user, profile, profileJson, rolesJson, profileImage, roles);
+        updateUserFromProfile(context.getSession(), context.getRealm(), user, profile, profileJson, rolesJson, profileImage, roles, correlationId);
 
         context.setUser(user);
         context.getAuthenticationSession().removeAuthNote("username");
@@ -164,22 +170,25 @@ public class ScoutnetAuthenticator implements Authenticator {
         context.success();
     }
 
-    private void updateUserFromProfile(UserModel user, Profile profile, String profileJson, String rolesJson, byte[] imageBytes, Roles roles) {
-        // Generate hash of current profile data (excluding last_login)
-        String newProfileHash = generateProfileHash(profileJson, rolesJson, imageBytes);
+    private void updateUserFromProfile(KeycloakSession session, RealmModel realm, UserModel user, Profile profile, String profileJson, String rolesJson, byte[] imageBytes, Roles roles, String correlationId) {
+        // Generate hash of relevant profile, group and provider data
+        String newProfileHash = generateProfileHash(realm, user, profileJson, rolesJson, imageBytes, profile, roles);
         String currentProfileHash = user.getFirstAttribute("scoutnet_profile_hash");
         
-        // Skip update if profile hasn't changed
+        // Skip update if hash has not changed
         if (newProfileHash.equals(currentProfileHash)) {
-            log.debugf("Profile hash unchanged (%s), skipping database update for user: %s", 
+            log.infof("Profile hash unchanged (%s), skipping update for user: %s", 
                 newProfileHash.substring(0, 8), user.getUsername());
             return;
         }
 
-        log.infof("Profile hash changed (old: %s, new: %s), updating database for user: %s", 
+        log.infof("Profile hash changed (old: %s, new: %s), updating user: %s", 
             currentProfileHash != null ? currentProfileHash.substring(0, 8) : "null", 
             newProfileHash.substring(0, 8), user.getUsername());
 
+        // Sync user groups
+        groupManager.syncUserGroups(session, realm, user, profile, roles, correlationId);
+        
         // Update all profile data
         user.setFirstName(profile.getFirstName());
         user.setLastName(profile.getLastName());
@@ -225,7 +234,7 @@ public class ScoutnetAuthenticator implements Authenticator {
         user.setSingleAttribute("scoutnet_profile_hash", newProfileHash);
     }
 
-    private String generateProfileHash(String profileJson, String rolesJson, byte[] imageBytes) {
+    private String generateProfileHash(RealmModel realm, UserModel user, String profileJson, String rolesJson, byte[] imageBytes, Profile profile, Roles roles) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             
@@ -244,6 +253,20 @@ public class ScoutnetAuthenticator implements Authenticator {
                 digest.update(String.valueOf(imageBytes.length).getBytes(StandardCharsets.UTF_8));
             }
             
+            // Add group-specific domain attributes for user's groups to detect changes
+            Set<String> userGroupIds = getUserGroupIds(profile, roles);
+            for (String groupId : userGroupIds) {
+                realm.getGroupsStream()
+                    .filter(g -> groupId.equals(g.getName()))
+                    .findFirst()
+                    .ifPresent(group -> {
+                        for (String attribute : TRACKED_ATTRIBUTES) {
+                            String value = group.getFirstAttribute(attribute);
+                            digest.update((groupId + ":" + attribute + ":" + (value != null ? value : "")).getBytes(StandardCharsets.UTF_8));
+                        }
+                    });
+            }
+            
             byte[] hash = digest.digest();
             StringBuilder hexString = new StringBuilder();
             for (byte b : hash) {
@@ -256,6 +279,25 @@ public class ScoutnetAuthenticator implements Authenticator {
             throw new RuntimeException("SHA-256 not available", e);
         }
     }
+    
+    private Set<String> getUserGroupIds(Profile profile, Roles roles) {
+        Set<String> groupIds = new HashSet<>();
+        
+        if (roles != null) {
+            if (roles.getOrganisation() != null) groupIds.addAll(roles.getOrganisation().keySet());
+            if (roles.getGroup() != null) groupIds.addAll(roles.getGroup().keySet());
+            if (roles.getDistrict() != null) groupIds.addAll(roles.getDistrict().keySet());
+        }
+        
+        if (profile != null && profile.getMemberships() != null && profile.getMemberships().getGroup() != null) {
+            for (String membershipKey : profile.getMemberships().getGroup().keySet()) {
+                groupIds.add(membershipKey);
+            }
+        }
+        
+        return groupIds;
+    }
+
 
     private List<String> parseAndFlattenRoles(Roles roles) {
         Set<String> roleSet = new HashSet<>();
