@@ -200,6 +200,14 @@ public class ScoutnetAuthenticator implements Authenticator {
         String firstLast = profile.getFirstLast();
         if (firstLast != null && !firstLast.trim().isEmpty()) {
             user.setSingleAttribute("firstlast", firstLast);
+            
+            // Update group-specific email attributes while we have firstLast
+            updateGroupEmailAttributes(user, firstLast);
+        } else {
+            // Clear all group-email attributes if firstLast is empty
+            user.getAttributes().keySet().stream()
+                .filter(attr -> attr.startsWith("group_email_"))
+                .forEach(attr -> user.removeAttribute(attr));
         }
         
         String scouternaEmail = profile.getScouternaEmail();
@@ -253,19 +261,13 @@ public class ScoutnetAuthenticator implements Authenticator {
                 digest.update(String.valueOf(imageBytes.length).getBytes(StandardCharsets.UTF_8));
             }
             
-            // Add group-specific domain attributes for user's groups to detect changes
-            Set<String> userGroupIds = getUserGroupIds(profile, roles);
-            for (String groupId : userGroupIds) {
-                realm.getGroupsStream()
-                    .filter(g -> groupId.equals(g.getName()))
-                    .findFirst()
-                    .ifPresent(group -> {
-                        for (String attribute : TRACKED_ATTRIBUTES) {
-                            String value = group.getFirstAttribute(attribute);
-                            digest.update((groupId + ":" + attribute + ":" + (value != null ? value : "")).getBytes(StandardCharsets.UTF_8));
-                        }
-                    });
-            }
+            // Add group-specific domain attributes for user's actual groups to detect changes
+            user.getGroupsStream().forEach(group -> {
+                for (String attribute : TRACKED_ATTRIBUTES) {
+                    String value = group.getFirstAttribute(attribute);
+                    digest.update((group.getName() + ":" + attribute + ":" + (value != null ? value : "")).getBytes(StandardCharsets.UTF_8));
+                }
+            });
             
             byte[] hash = digest.digest();
             StringBuilder hexString = new StringBuilder();
@@ -296,6 +298,37 @@ public class ScoutnetAuthenticator implements Authenticator {
         }
         
         return groupIds;
+    }
+    
+    private void updateGroupEmailAttributes(UserModel user, String firstLast) {
+        Set<String> processedAttributes = new HashSet<>();
+        
+        // Create/update group-email attributes for user's actual groups
+        user.getGroupsStream().forEach(group -> {
+            String domain = group.getFirstAttribute("domain");
+            String attributeName = "group_email_" + group.getName();
+            processedAttributes.add(attributeName);
+            
+            if (domain != null && !domain.trim().isEmpty() && isValidDomain(domain)) {
+                String email = firstLast + "@" + domain;
+                user.setSingleAttribute(attributeName, email);
+            } else {
+                user.removeAttribute(attributeName);
+            }
+        });
+        
+        // Remove old group-email attributes for groups user no longer belongs to
+        user.getAttributes().keySet().stream()
+            .filter(attr -> attr.startsWith("group_email_"))
+            .filter(attr -> !processedAttributes.contains(attr))
+            .forEach(attr -> user.removeAttribute(attr));
+    }
+    
+    private boolean isValidDomain(String domain) {
+        return domain.contains(".") && 
+               !domain.startsWith(".") && 
+               !domain.endsWith(".") && 
+               domain.length() > 3;
     }
 
 
