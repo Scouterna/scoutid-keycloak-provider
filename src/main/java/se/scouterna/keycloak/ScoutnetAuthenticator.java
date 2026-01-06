@@ -198,11 +198,15 @@ public class ScoutnetAuthenticator implements Authenticator {
         user.setSingleAttribute("scoutid_local_email", profile.getScoutIdLocalEmail());
         
         String firstLast = profile.getFirstLast();
+        String currentFirstLast = user.getFirstAttribute("firstlast");
+        
         if (firstLast != null && !firstLast.trim().isEmpty()) {
             user.setSingleAttribute("firstlast", firstLast);
             
-            // Update group-specific email attributes while we have firstLast
-            updateGroupEmailAttributes(user, firstLast);
+            // Only update group emails if firstLast has changed
+            if (!firstLast.equals(currentFirstLast)) {
+                updateGroupEmailAttributes(session, realm, user, firstLast);
+            }
         } else {
             // Clear all group-email attributes if firstLast is empty
             user.getAttributes().keySet().stream()
@@ -300,7 +304,7 @@ public class ScoutnetAuthenticator implements Authenticator {
         return groupIds;
     }
     
-    private void updateGroupEmailAttributes(UserModel user, String firstLast) {
+    private void updateGroupEmailAttributes(KeycloakSession session, RealmModel realm, UserModel user, String firstLast) {
         Set<String> processedAttributes = new HashSet<>();
         
         // Create/update group-email attributes for user's actual groups
@@ -310,8 +314,9 @@ public class ScoutnetAuthenticator implements Authenticator {
             processedAttributes.add(attributeName);
             
             if (domain != null && !domain.trim().isEmpty() && isValidDomain(domain)) {
-                String email = firstLast + "@" + domain;
-                user.setSingleAttribute(attributeName, email);
+                String baseEmail = firstLast + "@" + domain;
+                String uniqueEmail = ensureUniqueEmail(session, realm, user, baseEmail);
+                user.setSingleAttribute(attributeName, uniqueEmail);
             } else {
                 user.removeAttribute(attributeName);
             }
@@ -329,6 +334,24 @@ public class ScoutnetAuthenticator implements Authenticator {
                !domain.startsWith(".") && 
                !domain.endsWith(".") && 
                domain.length() > 3;
+    }
+    
+    private String ensureUniqueEmail(KeycloakSession session, RealmModel realm, UserModel currentUser, String baseEmail) {
+        String email = baseEmail;
+        int counter = 1;
+        
+        while (isEmailInUse(session, realm, currentUser, email)) {
+            String[] parts = baseEmail.split("@");
+            email = parts[0] + counter + "@" + parts[1];
+            counter++;
+        }
+        
+        return email;
+    }
+    
+    private boolean isEmailInUse(KeycloakSession session, RealmModel realm, UserModel currentUser, String email) {
+        return session.users().searchForUserByUserAttributeStream(realm, "group_email_", email)
+            .anyMatch(user -> !user.getId().equals(currentUser.getId()));
     }
 
 
