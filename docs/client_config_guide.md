@@ -44,26 +44,51 @@ Du kan justera sessionstider per klient för att balansera användarvänlighet m
 
 För Google Workspace rekommenderas att använda ScoutID för SSO-inloggning tillsammans med automatisk användarsynkronisering.
 
+#### OIDC-konfiguration (rekommenderat)
+
+**I Keycloak:**
+- **Skapa ny klient** med protokoll `openid-connect`
+- **Client ID**: [scoutkarens id]-google-workspace
+- **Name**: [Scoutkårens namn] Google Workspace
+Tryck **Next**.
+- **Client authentication**: On
+- **Authorization**: Off
+Lämna övriga orörda. Tryck **Next**.
+-**Root URL** https://accounts.google.com
+-**Root URL** https://accounts.google.com
+Lämna övriga tills vidare. Tryck **Next**. Öppna upp din nya klient. Gå till **Credentials** och kopiera Client Secret.
+
 **I Google Admin Console:**
-- Gå till Security > Authentication > SSO with third party IdP
-- Använd Keycloak SAML metadata URL
-- Ta rätt på SP details, där du behöver
-  - Entity ID
-  - ACS URL
+1. Gå till **Security** > **Authentication** > **SSO with third party IdP**
+2. Välj **Add OIDC profile**
+Ställ in:
+**SSO profile name:** ScoutID OIDC Keycloak
+**Client ID:** Samma som ovan
+**Client secret:** från keycloak enligt instruktion ovan
+**Issuer URL:** https://dev.id.scouterna.se
+**Change password URL:** https://scoutnet.se/f/request_password
+När klienten är skapad får du upp en Redirect URI. För in denna i Keycloak som **Valid redirect URI**.
 
-**SSO-konfiguration:**
-1. **Skapa ny klient** i Keycloak admin-konsolen
-2. **Client ID**: Entity ID från ovan
-3. **Client Protocol**: `saml`
-4. **Valid Redirect URIs**: ACS URL från ovan.
+**Konfigurera domän för grupper:**
+1. Gå till **Groups** i Keycloak admin-konsolen
+2. Välj relevant scoutgrupp (t.ex. "766"). Du kan hitta din scoutkårs id-nummer genom att logga in på din profil och kolla under **Primär Scoutkår - ID**. 
+3. Under **Attributes** lägg till:
+   - **Key**: `domain`
+   - **Value**: `dindomän.se` (t.ex. `malarscouterna.se`)
+4. **Spara** konfigurationen
 
-Öppna klientinställningarna. 
-1. Under Client scopes välj länken med ditt client id.
-2. Configure a new mapper
-3. User attribute for NameID
-4. Sätt namn valfritt, Name ID Format till *:emailAddress och User Attribute till firstlast.
-
-
+**Client Mapper för email-attribut:**
+1. Gå till **Clients** → [klient-namn] → **Client Scopes** → [klient-namn]-dedicated
+2. **Configure a new mapper** → **User Attribute**
+3. Konfigurera mappern:
+   - **Name**: `group_email_mapper`
+   - **User Attribute**: `group_email_766` (ersätt 766 med din grupps ID)
+   - **Token Claim Name**: `email`
+   - **Claim JSON Type**: String
+   - **Add to ID token**: On
+   - **Add to userinfo**: On
+   - **Add to lightweight access token**: On
+Tryck **Save**.
 
 **Användarsynkronisering:**
 För att automatiskt skapa och synkronisera användarkonton från Scoutnet till Google Workspace, använd [Google-Scoutnet-synk](https://github.com/Scouterna/Google-Scoutnet-synk).
