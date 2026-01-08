@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.8.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.7.0...v0.8.0) (2026-01-08)
+
+
+### Features
+
+* add group email ([9d2f727](https://github.com/Scouterna/scoutid-keycloak-provider/commit/9d2f7270c0e1892768c90bce573e9a8391002738))
+* add group logic ([f35cf54](https://github.com/Scouterna/scoutid-keycloak-provider/commit/f35cf54bbe2e97740206a4a053469b2b3a2a0ae7))
+
+
+### Bug Fixes
+
+* check that duplicate emails are not allowed ([070df52](https://github.com/Scouterna/scoutid-keycloak-provider/commit/070df5209f9623f72d4e5cb2322fcb47d2c53317))
+* group email duplication logic error ([473aea4](https://github.com/Scouterna/scoutid-keycloak-provider/commit/473aea46117b18adbae8294d1d56b32b0fa93d4c))
+* improve domain name handling ([c044772](https://github.com/Scouterna/scoutid-keycloak-provider/commit/c044772ed3ca6db33c79a40da90b3a3426a7f392))
+* remove unneccesary integration tests ([b01f42b](https://github.com/Scouterna/scoutid-keycloak-provider/commit/b01f42b023042941f017491f8e8a7869b1725ad7))
+* scoutkår id corrected ([23cf81e](https://github.com/Scouterna/scoutid-keycloak-provider/commit/23cf81e6c7987f64b77f805cda7c867baca28dc4))
+* simplified text normalisation ([cad46bf](https://github.com/Scouterna/scoutid-keycloak-provider/commit/cad46bf2f5d0de88dea1da2e6fdccee9b68a5463))
+
+
+### Documentation
+
+* client config update for Google workspace ([f04dccb](https://github.com/Scouterna/scoutid-keycloak-provider/commit/f04dccb6cde5ca3b48ad7746b9f1be10f56b1eda))
+* complete Google Workspace instructions ([fd447f9](https://github.com/Scouterna/scoutid-keycloak-provider/commit/fd447f9155f7527d709cfd0951fe55a3daed07eb))
+* Include client configuration data ([4ae908d](https://github.com/Scouterna/scoutid-keycloak-provider/commit/4ae908d12adc12619f8937fb93d8ba9a2f191f81))
+
 ## [0.7.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.6.0...v0.7.0) (2026-01-02)
 
 
