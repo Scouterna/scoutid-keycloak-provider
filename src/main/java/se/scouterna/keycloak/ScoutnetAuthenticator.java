@@ -230,14 +230,16 @@ public class ScoutnetAuthenticator implements Authenticator {
         }
 
         if (profile.getMemberships() != null && profile.getMemberships().getGroup() != null) {
-            profile.getMemberships().getGroup().values().stream()
-                .filter(GroupMembership::isPrimary)
+            profile.getMemberships().getGroup().entrySet().stream()
+                .filter(entry -> entry.getValue().isPrimary())
                 .findFirst()
-                .ifPresent(primaryMembership -> {
+                .ifPresent(primaryEntry -> {
+                    String membershipKey = primaryEntry.getKey();
+                    GroupMembership primaryMembership = primaryEntry.getValue();
                     Group group = primaryMembership.getGroup();
                     if (group != null) {
                         user.setSingleAttribute("scoutnet_primary_group_name", group.getName());
-                        user.setSingleAttribute("scoutnet_primary_group_no", String.valueOf(group.getGroupNo()));
+                        user.setSingleAttribute("scoutnet_primary_group_no", membershipKey);
                     }
                 });
         }
