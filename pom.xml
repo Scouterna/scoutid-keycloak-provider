@@ -89,12 +89,7 @@
             <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-admin-client</artifactId>
-            <version>26.0.7</version>
-            <scope>test</scope>
-        </dependency>
+
     </dependencies>
 
     <build>
