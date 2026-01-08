@@ -315,7 +315,7 @@ public class ScoutnetAuthenticator implements Authenticator {
             
             if (domain != null && !domain.trim().isEmpty() && isValidDomain(domain)) {
                 String baseEmail = firstLast + "@" + domain;
-                String uniqueEmail = ensureUniqueEmail(session, realm, user, baseEmail);
+                String uniqueEmail = ensureUniqueEmail(session, realm, user, baseEmail, group.getName());
                 user.setSingleAttribute(attributeName, uniqueEmail);
             } else {
                 user.removeAttribute(attributeName);
@@ -336,11 +336,12 @@ public class ScoutnetAuthenticator implements Authenticator {
                domain.length() > 3;
     }
     
-    private String ensureUniqueEmail(KeycloakSession session, RealmModel realm, UserModel currentUser, String baseEmail) {
+    private String ensureUniqueEmail(KeycloakSession session, RealmModel realm, UserModel currentUser, String baseEmail, String groupName) {
         String email = baseEmail;
         int counter = 1;
+        String attributeName = "group_email_" + groupName;
         
-        while (isEmailInUse(session, realm, currentUser, email)) {
+        while (isEmailInUse(session, realm, currentUser, email, attributeName)) {
             String[] parts = baseEmail.split("@");
             email = parts[0] + counter + "@" + parts[1];
             counter++;
@@ -349,8 +350,8 @@ public class ScoutnetAuthenticator implements Authenticator {
         return email;
     }
     
-    private boolean isEmailInUse(KeycloakSession session, RealmModel realm, UserModel currentUser, String email) {
-        return session.users().searchForUserByUserAttributeStream(realm, "group_email_", email)
+    private boolean isEmailInUse(KeycloakSession session, RealmModel realm, UserModel currentUser, String email, String attributeName) {
+        return session.users().searchForUserByUserAttributeStream(realm, attributeName, email)
             .anyMatch(user -> !user.getId().equals(currentUser.getId()));
     }
 
