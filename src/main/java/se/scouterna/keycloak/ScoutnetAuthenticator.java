@@ -5,6 +5,7 @@ import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
+import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
@@ -198,15 +199,11 @@ public class ScoutnetAuthenticator implements Authenticator {
         user.setSingleAttribute("scoutid_local_email", profile.getScoutIdLocalEmail());
         
         String firstLast = profile.getFirstLast();
-        String currentFirstLast = user.getFirstAttribute("firstlast");
         
         if (firstLast != null && !firstLast.trim().isEmpty()) {
             user.setSingleAttribute("firstlast", firstLast);
-            
-            // Only update group emails if firstLast has changed
-            if (!firstLast.equals(currentFirstLast)) {
-                updateGroupEmailAttributes(session, realm, user, firstLast);
-            }
+            // Always update group emails when profile is updated (hash changed)
+            updateGroupEmailAttributes(session, realm, user, firstLast);
         } else {
             // Clear all group-email attributes if firstLast is empty
             user.getAttributes().keySet().stream()
@@ -267,13 +264,23 @@ public class ScoutnetAuthenticator implements Authenticator {
                 digest.update(String.valueOf(imageBytes.length).getBytes(StandardCharsets.UTF_8));
             }
             
-            // Add group-specific domain attributes for user's actual groups to detect changes
-            user.getGroupsStream().forEach(group -> {
-                for (String attribute : TRACKED_ATTRIBUTES) {
-                    String value = group.getFirstAttribute(attribute);
-                    digest.update((group.getName() + ":" + attribute + ":" + (value != null ? value : "")).getBytes(StandardCharsets.UTF_8));
-                }
-            });
+            // Find scoutnet parent group
+            GroupModel scoutnetParent = realm.getGroupsStream()
+                .filter(g -> "scoutnet".equals(g.getName()))
+                .findFirst()
+                .orElse(null);
+            
+            // Add group-specific domain attributes for user's scoutnet subgroups only
+            if (scoutnetParent != null) {
+                user.getGroupsStream()
+                    .filter(group -> scoutnetParent.equals(group.getParent()))
+                    .forEach(group -> {
+                        for (String attribute : TRACKED_ATTRIBUTES) {
+                            String value = group.getFirstAttribute(attribute);
+                            digest.update((group.getName() + ":" + attribute + ":" + (value != null ? value : "")).getBytes(StandardCharsets.UTF_8));
+                        }
+                    });
+            }
             
             byte[] hash = digest.digest();
             StringBuilder hexString = new StringBuilder();
@@ -309,26 +316,23 @@ public class ScoutnetAuthenticator implements Authenticator {
     private void updateGroupEmailAttributes(KeycloakSession session, RealmModel realm, UserModel user, String firstLast) {
         Set<String> processedAttributes = new HashSet<>();
         
-        // Create/update group-email attributes for user's actual groups
-        user.getGroupsStream().forEach(group -> {
-            String domain = group.getFirstAttribute("domain");
-            String attributeName = "group_email_" + group.getName();
-            processedAttributes.add(attributeName);
-            
-            if (domain == null || domain.trim().isEmpty()) {
-                user.removeAttribute(attributeName);
-                return;
-            }
-            domain = domain.trim();
-            
-            if (isValidDomain(domain)) {
-                String baseEmail = firstLast + "@" + domain;
-                String uniqueEmail = ensureUniqueEmail(session, realm, user, baseEmail, group.getName());
-                user.setSingleAttribute(attributeName, uniqueEmail);
-            } else {
-                user.removeAttribute(attributeName);
-            }
-        });
+        // Create/update group-email attributes for user's scoutnet subgroups only
+        user.getGroupsStream()
+            .filter(group -> group.getParent() != null && "scoutnet".equals(group.getParent().getName()))
+            .forEach(group -> {
+                String domain = group.getFirstAttribute("domain");
+                String attributeName = "group_email_" + group.getName();
+                processedAttributes.add(attributeName);
+                
+                if (isValidDomain(domain)) {
+                    domain = domain.trim();
+                    String baseEmail = firstLast + "@" + domain;
+                    String uniqueEmail = ensureUniqueEmail(session, realm, user, baseEmail, group.getName());
+                    user.setSingleAttribute(attributeName, uniqueEmail);
+                } else {
+                    user.removeAttribute(attributeName);
+                }
+            });
         
         // Remove old group-email attributes for groups user no longer belongs to
         user.getAttributes().keySet().stream()
@@ -338,7 +342,9 @@ public class ScoutnetAuthenticator implements Authenticator {
     }
     
     private boolean isValidDomain(String domain) {
-        return domain.contains(".") && 
+        return domain != null &&
+               !domain.trim().isEmpty() &&
+               domain.contains(".") && 
                !domain.startsWith(".") && 
                !domain.endsWith(".") && 
                !domain.contains("/") &&
