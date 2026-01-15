@@ -312,11 +312,16 @@ public class ScoutnetAuthenticator implements Authenticator {
         // Create/update group-email attributes for user's actual groups
         user.getGroupsStream().forEach(group -> {
             String domain = group.getFirstAttribute("domain");
-            domain = domain.trim();
             String attributeName = "group_email_" + group.getName();
             processedAttributes.add(attributeName);
             
-            if (domain != null && !domain.isEmpty() && isValidDomain(domain)) {
+            if (domain == null || domain.trim().isEmpty()) {
+                user.removeAttribute(attributeName);
+                return;
+            }
+            domain = domain.trim();
+            
+            if (isValidDomain(domain)) {
                 String baseEmail = firstLast + "@" + domain;
                 String uniqueEmail = ensureUniqueEmail(session, realm, user, baseEmail, group.getName());
                 user.setSingleAttribute(attributeName, uniqueEmail);
