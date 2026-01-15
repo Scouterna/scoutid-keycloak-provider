@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 public class ScoutnetGroupManager {
 
     private static final Logger log = Logger.getLogger(ScoutnetGroupManager.class);
+    private static final String PARENT_GROUP_NAME = "scoutnet";
     
     // Attributes to track for hash changes - add new ones here
     private static final List<String> TRACKED_ATTRIBUTES = Arrays.asList("domain");
@@ -29,6 +30,14 @@ public class ScoutnetGroupManager {
         if (roles == null && (profile == null || profile.getMemberships() == null)) {
             log.debugf("[%s] No roles or membership data available, skipping group sync for user: %s", correlationId, user.getUsername());
             return;
+        }
+
+        GroupModel parentGroup = ensureParentGroup(realm);
+        migrateUserFromRootGroups(user, parentGroup, correlationId);
+        
+        if (!user.isMemberOf(parentGroup)) {
+            user.joinGroup(parentGroup);
+            log.debugf("[%s] Added user %s to parent group %s", correlationId, user.getUsername(), PARENT_GROUP_NAME);
         }
 
         Set<String> targetGroupIds = new HashSet<>();
@@ -40,7 +49,7 @@ public class ScoutnetGroupManager {
             if (roles.getOrganisation() != null) {
                 for (String groupId : roles.getOrganisation().keySet()) {
                     targetGroupIds.add(groupId);
-                    GroupModel group = findOrCreateGroup(realm, groupId, groupNames.get(groupId));
+                    GroupModel group = findOrCreateGroup(realm, parentGroup, groupId, groupNames.get(groupId));
                     updateGroupAttributes(group, "organisation");
                     if (!user.isMemberOf(group)) {
                         user.joinGroup(group);
@@ -53,7 +62,7 @@ public class ScoutnetGroupManager {
             if (roles.getGroup() != null) {
                 for (String groupId : roles.getGroup().keySet()) {
                     targetGroupIds.add(groupId);
-                    GroupModel group = findOrCreateGroup(realm, groupId, groupNames.get(groupId));
+                    GroupModel group = findOrCreateGroup(realm, parentGroup, groupId, groupNames.get(groupId));
                     updateGroupAttributes(group, "group");
                     if (!user.isMemberOf(group)) {
                         user.joinGroup(group);
@@ -66,7 +75,7 @@ public class ScoutnetGroupManager {
             if (roles.getDistrict() != null) {
                 for (String groupId : roles.getDistrict().keySet()) {
                     targetGroupIds.add(groupId);
-                    GroupModel group = findOrCreateGroup(realm, groupId, null);
+                    GroupModel group = findOrCreateGroup(realm, parentGroup, groupId, null);
                     updateGroupAttributes(group, "district");
                     if (!user.isMemberOf(group)) {
                         user.joinGroup(group);
@@ -81,7 +90,7 @@ public class ScoutnetGroupManager {
             for (Map.Entry<String, GroupMembership> entry : profile.getMemberships().getGroup().entrySet()) {
                 String groupId = entry.getKey(); // Use membership key (766) not group_no (1427)
                 targetGroupIds.add(groupId);
-                GroupModel group = findOrCreateGroup(realm, groupId, entry.getValue().getGroup().getName());
+                GroupModel group = findOrCreateGroup(realm, parentGroup, groupId, entry.getValue().getGroup().getName());
                 updateGroupAttributes(group, "group");
                 if (!user.isMemberOf(group)) {
                     user.joinGroup(group);
@@ -90,25 +99,47 @@ public class ScoutnetGroupManager {
             }
         }
 
-        // Remove user from groups they're no longer part of
-        Set<GroupModel> currentGroups = user.getGroupsStream().collect(Collectors.toSet());
-        for (GroupModel currentGroup : currentGroups) {
-            String groupType = currentGroup.getFirstAttribute("scoutnet_type");
-            if (groupType != null && !targetGroupIds.contains(currentGroup.getName())) {
-                user.leaveGroup(currentGroup);
-                log.debugf("[%s] Removed user %s from group %s", correlationId, user.getUsername(), currentGroup.getName());
+        // Remove user from scoutnet subgroups they're no longer part of
+        parentGroup.getSubGroupsStream().forEach(subgroup -> {
+            if (!targetGroupIds.contains(subgroup.getName()) && user.isMemberOf(subgroup)) {
+                user.leaveGroup(subgroup);
+                log.debugf("[%s] Removed user %s from group %s", correlationId, user.getUsername(), subgroup.getName());
             }
-        }
+        });
     }
 
-    private GroupModel findOrCreateGroup(RealmModel realm, String groupId, String displayName) {
-        GroupModel group = realm.getGroupsStream()
+    private GroupModel ensureParentGroup(RealmModel realm) {
+        return realm.getGroupsStream()
+            .filter(g -> PARENT_GROUP_NAME.equals(g.getName()))
+            .findFirst()
+            .orElseGet(() -> {
+                GroupModel parent = realm.createGroup(PARENT_GROUP_NAME);
+                parent.setName(PARENT_GROUP_NAME);
+                log.infof("Created parent group: %s", PARENT_GROUP_NAME);
+                return parent;
+            });
+    }
+
+    private void migrateUserFromRootGroups(UserModel user, GroupModel parentGroup, String correlationId) {
+        user.getGroupsStream()
+            .filter(g -> g.getParent() == null)
+            .filter(g -> g.getFirstAttribute("scoutnet_type") != null)
+            .filter(g -> !PARENT_GROUP_NAME.equals(g.getName()))
+            .collect(Collectors.toList())
+            .forEach(oldGroup -> {
+                user.leaveGroup(oldGroup);
+                log.infof("[%s] Migrated user %s from root group %s", correlationId, user.getUsername(), oldGroup.getName());
+            });
+    }
+
+    private GroupModel findOrCreateGroup(RealmModel realm, GroupModel parentGroup, String groupId, String displayName) {
+        GroupModel group = parentGroup.getSubGroupsStream()
             .filter(g -> groupId.equals(g.getName()))
             .findFirst()
             .orElseGet(() -> {
-                GroupModel newGroup = realm.createGroup(groupId);
+                GroupModel newGroup = realm.createGroup(groupId, parentGroup);
                 newGroup.setName(groupId);
-                log.debugf("Created new Keycloak group: %s", groupId);
+                log.debugf("Created new Keycloak subgroup: %s under %s", groupId, PARENT_GROUP_NAME);
                 return newGroup;
             });
             
