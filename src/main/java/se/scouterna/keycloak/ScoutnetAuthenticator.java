@@ -80,6 +80,7 @@ public class ScoutnetAuthenticator implements Authenticator {
     @Override
     public void action(AuthenticationFlowContext context) {
         String correlationId = UUID.randomUUID().toString().substring(0, 8);
+        long startTime = System.currentTimeMillis();
         log.infof("[%s] Processing submitted login form for Scoutnet authentication.", correlationId);
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         String username = formData.getFirst("username");
@@ -98,7 +99,11 @@ public class ScoutnetAuthenticator implements Authenticator {
         }
 
         // Step 1: Authenticate and get a token
+        long authStart = System.currentTimeMillis();
         AuthResult authResult = scoutnetClient.authenticate(username, password, correlationId);
+        long authTime = System.currentTimeMillis() - authStart;
+        log.infof("[%s] Authentication API response time: %dms", correlationId, authTime);
+        
         if (!authResult.isSuccess()) {
             String messageKey = authResult.getError() == AuthResult.AuthError.INVALID_CREDENTIALS 
                 ? "invalidUserMessage" 
@@ -114,7 +119,11 @@ public class ScoutnetAuthenticator implements Authenticator {
         }
 
         // Step 2: Use the token to fetch the full profile
+        long profileStart = System.currentTimeMillis();
         String profileJson = scoutnetClient.getProfileJson(authResponse.getToken(), correlationId);
+        long profileTime = System.currentTimeMillis() - profileStart;
+        log.infof("[%s] Profile API response time: %dms", correlationId, profileTime);
+        
         if (profileJson == null) {
             String errorMsg = String.format("Could not retrieve user profile from Scoutnet after successful login for user: %s", username);
             failAuthentication(context, username, errorMsg, correlationId);
@@ -135,7 +144,11 @@ public class ScoutnetAuthenticator implements Authenticator {
         byte[] profileImage = null;
 
         // Step 2c: Fetch roles information from user (non-blocking)
+        long rolesStart = System.currentTimeMillis();
         String rolesJson = scoutnetClient.getRolesJson(authResponse.getToken(), correlationId);
+        long rolesTime = System.currentTimeMillis() - rolesStart;
+        log.infof("[%s] Roles API response time: %dms", correlationId, rolesTime);
+        
         Roles roles = null;
         if (rolesJson != null) {
             try {
@@ -150,19 +163,33 @@ public class ScoutnetAuthenticator implements Authenticator {
         }
 
         // Step 3: Find or create the Keycloak user
+        long userLookupStart = System.currentTimeMillis();
         String keycloakUsername = "scoutnet|" + profile.getMemberNo();
         UserModel user = KeycloakModelUtils.findUserByNameOrEmail(context.getSession(), context.getRealm(), keycloakUsername);
-
+        long userLookupTime = System.currentTimeMillis() - userLookupStart;
+        
+        boolean isNewUser = user == null;
         if (user == null) {
-            log.infof("[%s] First time login for Scoutnet user: %d. Creating new Keycloak user: %s.", correlationId, profile.getMemberNo(), keycloakUsername);
+            log.infof("[%s] First time login for Scoutnet user: %d. Creating new Keycloak user: %s. (lookup took %dms)", correlationId, profile.getMemberNo(), keycloakUsername, userLookupTime);
             user = context.getSession().users().addUser(context.getRealm(), keycloakUsername);
             user.setEnabled(true);
         } else {
-            log.debugf("[%s] Found existing Keycloak user: %s, checking for profile updates.", correlationId, keycloakUsername);
+            log.debugf("[%s] Found existing Keycloak user: %s, checking for profile updates. (lookup took %dms)", correlationId, keycloakUsername, userLookupTime);
         }
 
         // Step 4: Update the user with the rich profile data
+        long updateStart = System.currentTimeMillis();
         updateUserFromProfile(context.getSession(), context.getRealm(), user, profile, profileJson, rolesJson, profileImage, roles, correlationId);
+        long updateTime = System.currentTimeMillis() - updateStart;
+        
+        long totalApiTime = authTime + profileTime + rolesTime;
+        long nonApiTime = userLookupTime + updateTime;
+        long totalTime = System.currentTimeMillis() - startTime;
+        log.infof("[%s] Total login time: %dms\n" +
+                  "  (auth:%dms, profile:%dms, roles:%dms, lookup:%dms, update:%dms)\n" +
+                  "  %s user - API:%dms vs non-API:%dms", 
+                  correlationId, totalTime, authTime, profileTime, rolesTime, userLookupTime, updateTime, 
+                  isNewUser ? "NEW" : "EXISTING", totalApiTime, nonApiTime);
 
         context.setUser(user);
         context.getAuthenticationSession().removeAuthNote("username");
