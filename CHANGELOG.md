@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.9.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.8.0...v0.9.0) (2026-01-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* Group structure changes from flat to hierarchical. Existing users will be automatically migrated on next login. When a root group is empty it can be manually removed.
+
+### Features
+
+* implement hierarchical group structure with scoutnet parent group ([ff91cbd](https://github.com/Scouterna/scoutid-keycloak-provider/commit/ff91cbdab1742c79fe3cbb20966db666a6ad64b1))
+
+
+### Bug Fixes
+
+* allow group without domain attribute ([4f43ee7](https://github.com/Scouterna/scoutid-keycloak-provider/commit/4f43ee7423bd2ab6d563bd0107067eee8fab2686))
+* simplify role list format ([1c5e6c7](https://github.com/Scouterna/scoutid-keycloak-provider/commit/1c5e6c7111cc440997d6cea8e1983c6a6af65c01))
+
 ## [0.8.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.7.0...v0.8.0) (2026-01-08)
 
 
