@@ -373,19 +373,17 @@ public class ScoutnetAuthenticator implements Authenticator {
     }
 
 
+    /**
+     * Flattens the nested roles structure into a list of strings.
+     * Output format: roleType:typeId:roleName (e.g., "organisation:692:board_member")
+     */
     private List<String> parseAndFlattenRoles(Roles roles) {
         Set<String> roleSet = new HashSet<>();
         
-        // The Map type now accurately reflects the three-level nesting: 
-        // Key (Role Type Name) -> Value (Map<Type ID, Map<Role ID, Role Name>>)
+        // Aggregate all role types: Map<roleType, Map<typeId, Map<roleId, roleName>>>
         Map<String, Map<String, Map<String, String>>> allRolesMap = new HashMap<>();
-
-        // --- AGGREGATE ALL ROLE MAPS FROM THE ROLES OBJECT ---
-        // Safely aggregate all role types into one map for simplified iteration.
-        // NOTE: Ensure your Roles.java class has working getters for all fields.
         if (roles.getOrganisation() != null) allRolesMap.put("organisation", roles.getOrganisation());
         if (roles.getGroup() != null) allRolesMap.put("group", roles.getGroup());
-        // ... add all other role types (region, project, troop, etc.) ...
         if (roles.getRegion() != null) allRolesMap.put("region", roles.getRegion());
         if (roles.getProject() != null) allRolesMap.put("project", roles.getProject());
         if (roles.getNetwork() != null) allRolesMap.put("network", roles.getNetwork());
@@ -394,53 +392,25 @@ public class ScoutnetAuthenticator implements Authenticator {
         if (roles.getTroop() != null) allRolesMap.put("troop", roles.getTroop());
         if (roles.getPatrol() != null) allRolesMap.put("patrol", roles.getPatrol());
 
-
-        // --- ITERATION AND FLATTENING LOGIC ---
-
-        // 1. Iterate over the role types (e.g., "organisation")
+        // Flatten nested structure into roleType:typeId:roleName strings
         for (Map.Entry<String, Map<String, Map<String, String>>> roleTypeEntry : allRolesMap.entrySet()) {
             String roleType = roleTypeEntry.getKey();
-            // rolesForType is now the Map<Type ID, Map<Role ID, Role Name>>
             Map<String, Map<String, String>> rolesForType = roleTypeEntry.getValue();
 
-            if (rolesForType != null && !rolesForType.isEmpty()) {
-
-                // 2. Iterate over the Type IDs (e.g., "692")
+            if (rolesForType != null) {
                 for (Map.Entry<String, Map<String, String>> roleTypeIdEntry : rolesForType.entrySet()) {
                     String roleTypeId = roleTypeIdEntry.getKey();
-                    // rolesForTypeId is now the Map<Role ID, Role Name>
                     Map<String, String> rolesForTypeId = roleTypeIdEntry.getValue();
                     
-                    if (rolesForTypeId != null && !rolesForTypeId.isEmpty()) {
-                        
-                        // 3. Iterate over the Role ID/Role Name pairs (e.g., "68": "board_member")
-                        for (Map.Entry<String, String> finalRoleEntry : rolesForTypeId.entrySet()) {
-                            // String roleId = finalRoleEntry.getKey(); // Role ID (not used in final string)
-                            String roleName = finalRoleEntry.getValue(); // Role Name
-
-                            // Generate all wildcard combinations based on your PHP logic:
-                            
-                            // Full specific role: organisation:692:board_member
+                    if (rolesForTypeId != null) {
+                        for (String roleName : rolesForTypeId.values()) {
                             roleSet.add(roleType + ":" + roleTypeId + ":" + roleName);
-                            
-                            // Type-wide role: organisation:*:board_member
-                            roleSet.add(roleType + ":*:" + roleName);
-                            
-                            // Global role: *:*:board_member
-                            roleSet.add("*:*:" + roleName);
                         }
-                        
-                        // Add the wildcard for all roles within this specific type ID: organisation:692:*
-                        roleSet.add(roleType + ":" + roleTypeId + ":*");
                     }
                 }
-                
-                // Add the wildcard for all roles within this specific type: organisation:*:*
-                roleSet.add(roleType + ":*:*");
             }
         }
         
-        // Finalize the list: convert Set to List and sort
         List<String> roleList = new ArrayList<>(roleSet);
         Collections.sort(roleList);
         return roleList;
