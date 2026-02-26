@@ -9,12 +9,6 @@ import se.scouterna.keycloak.client.dto.ErrorResponse;
 import se.scouterna.keycloak.client.dto.Profile;
 import se.scouterna.keycloak.client.dto.Roles;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -29,11 +23,7 @@ public class ScoutnetClient {
     private static final String SCOUTNET_BASE_URL = System.getenv().getOrDefault("SCOUTNET_BASE_URL", "https://scoutnet.se");
     private static final String AUTH_URL = SCOUTNET_BASE_URL + "/api/authenticate";
     private static final String PROFILE_URL = SCOUTNET_BASE_URL + "/api/get/profile";
-    private static final String PROFILE_IMAGE_URL = SCOUTNET_BASE_URL + "/api/get/profile_image";
     private static final String ROLES_URL = SCOUTNET_BASE_URL + "/api/get/user_roles";
-    
-    // Max width/height for the avatar to keep the OIDC token size manageable
-    private static final int TARGET_IMAGE_SIZE = 128;
     
     // Shared HttpClient with optimized connection pool for high-load scenarios
     private static final HttpClient SHARED_HTTP_CLIENT = HttpClient.newBuilder()
@@ -231,91 +221,6 @@ public class ScoutnetClient {
         } catch (Exception e) {
             log.errorf("[%s] Unexpected error during Scoutnet roles fetch: %s", correlationId, e.getClass().getSimpleName());
             return null;
-        }
-    }
-
-    /**
-     * Fetches, resizes, and compresses the user profile image.
-     *
-     * @param token The bearer token.
-     * @return byte[] containing the compressed JPEG image data, or null if not found.
-     */
-    public byte[] getProfileImage(String token, String correlationId) {
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(PROFILE_IMAGE_URL))
-                .header("Authorization", "Bearer " + token)
-                .timeout(Duration.ofSeconds(15)) // Slightly longer for image download
-                .GET()
-                .build();
-
-            HttpResponse<byte[]> response = SHARED_HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofByteArray());
-            
-            if (response.statusCode() == 200) {
-                return processImage(response.body());
-            } else if (response.statusCode() == 404) {
-                log.debugf("[%s] No profile image found for user.", correlationId);
-                return null;
-            } else {
-                String errorType = getErrorType(response.statusCode());
-                log.warnf("[%s] Scoutnet profile image fetch failed. Status: %d, Error: %s", correlationId, response.statusCode(), errorType);
-                return null;
-            }
-        } catch (java.net.http.HttpTimeoutException e) {
-            log.errorf("[%s] Scoutnet API timeout during profile image fetch: %s", correlationId, e.getMessage());
-            return null;
-        } catch (java.net.ConnectException e) {
-            log.errorf("[%s] Cannot connect to Scoutnet API for profile image fetch: %s", correlationId, e.getMessage());
-            return null;
-        } catch (IOException e) {
-            log.errorf("[%s] Image processing error: %s", correlationId, e.getMessage());
-            return null;
-        } catch (Exception e) {
-            log.errorf("[%s] Unexpected error during profile image fetch: %s", correlationId, e.getClass().getSimpleName());
-            return null;
-        }
-    }
-
-    /**
-     * Helper to resize and compress image to JPG to save space in the DB/Token.
-     */
-    private byte[] processImage(byte[] imageBytes) {
-        if (imageBytes == null || imageBytes.length == 0) return null;
-
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
-             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-
-            BufferedImage originalImage = ImageIO.read(bais);
-            if (originalImage == null) return null; // Not a valid image
-
-            // Calculate new dimensions preserving aspect ratio
-            int originalWidth = originalImage.getWidth();
-            int originalHeight = originalImage.getHeight();
-            int newWidth = TARGET_IMAGE_SIZE;
-            int newHeight = TARGET_IMAGE_SIZE;
-
-            if (originalWidth > originalHeight) {
-                newHeight = (int) ((double) originalHeight / originalWidth * TARGET_IMAGE_SIZE);
-            } else {
-                newWidth = (int) ((double) originalWidth / originalHeight * TARGET_IMAGE_SIZE);
-            }
-
-            // Resize logic
-            Image resultingImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-            BufferedImage outputImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
-            
-            Graphics2D g2d = outputImage.createGraphics();
-            g2d.drawImage(resultingImage, 0, 0, null);
-            g2d.dispose();
-
-            // Write as JPEG for better compression than PNG
-            ImageIO.write(outputImage, "jpg", baos);
-            
-            return baos.toByteArray();
-
-        } catch (IOException e) {
-            log.errorf("Error processing profile image: %s", e.getMessage());
-            return null; // Fail gracefully
         }
     }
 }

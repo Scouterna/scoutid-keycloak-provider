@@ -67,22 +67,12 @@ public class ScoutnetClientIT {
 
         System.out.println("Profile fetch successful for: " + profile.getFirstName() + " " + profile.getLastName());
 
-        // Step 3: Fetch Profile Image
-        byte[] imageBytes = scoutnetClient.getProfileImage(authResponse.getToken(), correlationId);
-        
-        if (imageBytes != null) {
-            System.out.println("Compressed Image size: " + imageBytes.length + " bytes.");
-            
-            // Validation: The image should be reasonably small due to resizing (e.g., < 100KB)
-            // A 128x128 JPG is usually around 2KB - 10KB.
-            assertTrue(imageBytes.length > 0, "Image bytes should not be empty");
-            assertTrue(imageBytes.length < 100_000, "Image should be compressed/resized to a reasonable size for a token claim");
-            
-            // Check magic numbers for JPEG (FF D8)
-            assertEquals((byte) 0xFF, imageBytes[0], "Should be JPEG format");
-            assertEquals((byte) 0xD8, imageBytes[1], "Should be JPEG format");
+        // Step 3: Check avatar URL
+        if (profile.getAvatarUrl() != null && !profile.getAvatarUrl().isEmpty()) {
+            System.out.println("Avatar URL: " + profile.getAvatarUrl());
+            assertTrue(profile.getAvatarUrl().startsWith("http"), "Avatar URL should be a valid HTTP(S) URL");
         } else {
-            System.out.println("User has no profile image.");
+            System.out.println("User has no avatar URL.");
         }
 
         // Step 4: Fetch roles
@@ -129,26 +119,26 @@ public class ScoutnetClientIT {
         assertNotNull(rolesJson, "Roles JSON should not be null");
         
         // Test hash generation with same data
-        String hash1 = generateTestHash(profileJson1, rolesJson, null);
-        String hash2 = generateTestHash(profileJson2, rolesJson, null);
+        String hash1 = generateTestHash(profileJson1, rolesJson);
+        String hash2 = generateTestHash(profileJson2, rolesJson);
         
         assertEquals(hash1, hash2, "Identical profile and roles data should produce identical hashes");
         
         // Test hash with modified profile JSON
         String modifiedProfileJson = profileJson1.replaceAll("\"first_name\":\s*\"[^\"]*\"", "\"first_name\": \"TestModified\"");
-        String hashModifiedProfile = generateTestHash(modifiedProfileJson, rolesJson, null);
+        String hashModifiedProfile = generateTestHash(modifiedProfileJson, rolesJson);
         
         assertNotEquals(hash1, hashModifiedProfile, "Modified profile data should produce different hash");
         
         // Test hash with modified roles JSON
         String modifiedRolesJson = rolesJson.replaceAll("\"organisation\":", "\"organisation_modified\":");
-        String hashModifiedRoles = generateTestHash(profileJson1, modifiedRolesJson, null);
+        String hashModifiedRoles = generateTestHash(profileJson1, modifiedRolesJson);
         
         assertNotEquals(hash1, hashModifiedRoles, "Modified roles data should produce different hash");
         
         // Test that last_login changes don't affect hash
         String jsonWithDifferentLogin = profileJson1.replaceAll("\"last_login\":\s*\"[^\"]*\"", "\"last_login\": \"2025-01-01 00:00:00\"");
-        String hashWithDifferentLogin = generateTestHash(jsonWithDifferentLogin, rolesJson, null);
+        String hashWithDifferentLogin = generateTestHash(jsonWithDifferentLogin, rolesJson);
         
         assertEquals(hash1, hashWithDifferentLogin, "Different last_login should not affect hash");
         
@@ -156,7 +146,7 @@ public class ScoutnetClientIT {
     }
     
     // Helper method that mimics the hash generation logic from ScoutnetAuthenticator
-    private String generateTestHash(String profileJson, String rolesJson, byte[] imageBytes) {
+    private String generateTestHash(String profileJson, String rolesJson) {
         try {
             java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
             
@@ -166,10 +156,6 @@ public class ScoutnetClientIT {
             
             if (rolesJson != null) {
                 digest.update(rolesJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            }
-            
-            if (imageBytes != null) {
-                digest.update(String.valueOf(imageBytes.length).getBytes(java.nio.charset.StandardCharsets.UTF_8));
             }
             
             byte[] hash = digest.digest();
