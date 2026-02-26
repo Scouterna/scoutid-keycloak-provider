@@ -25,6 +25,8 @@ public class Profile {
     private Memberships memberships;
     @JsonProperty("contact_info")
     private Map<String, Map<String, Object>> contactInfo;
+    @JsonProperty("avatar_url")
+    private String avatarUrl;
 
     // Getters and Setters
     public int getMemberNo() { return memberNo; }
@@ -45,6 +47,8 @@ public class Profile {
     public void setMemberships(Memberships memberships) { this.memberships = memberships; }
     public Map<String, Map<String, Object>> getContactInfo() { return contactInfo; }
     public void setContactInfo(Map<String, Map<String, Object>> contactInfo) { this.contactInfo = contactInfo; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
     
     /**
      * Generic helper to extract contact info by key

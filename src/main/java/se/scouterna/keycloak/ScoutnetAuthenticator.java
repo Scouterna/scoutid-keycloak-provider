@@ -19,7 +19,6 @@ import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -131,11 +130,7 @@ public class ScoutnetAuthenticator implements Authenticator {
             return;
         }
 
-        // Step 2b: Fetch profile image (non-blocking failure - if image fails, we still proceed)
-        // byte[] profileImage = scoutnetClient.getProfileImage(authResponse.getToken(), correlationId);
-        byte[] profileImage = null;
-
-        // Step 2c: Fetch roles information from user (non-blocking)
+        // Step 2b: Fetch roles information from user (non-blocking)
         String rolesJson = scoutnetClient.getRolesJson(authResponse.getToken(), correlationId);
         Roles roles = null;
         if (rolesJson != null) {
@@ -163,7 +158,7 @@ public class ScoutnetAuthenticator implements Authenticator {
         }
 
         // Step 4: Update the user with the rich profile data
-        updateUserFromProfile(context.getSession(), context.getRealm(), user, profile, profileJson, rolesJson, profileImage, roles, correlationId);
+        updateUserFromProfile(context.getSession(), context.getRealm(), user, profile, profileJson, rolesJson, roles, correlationId);
 
         context.setUser(user);
         context.getAuthenticationSession().removeAuthNote("username");
@@ -171,9 +166,9 @@ public class ScoutnetAuthenticator implements Authenticator {
         context.success();
     }
 
-    private void updateUserFromProfile(KeycloakSession session, RealmModel realm, UserModel user, Profile profile, String profileJson, String rolesJson, byte[] imageBytes, Roles roles, String correlationId) {
+    private void updateUserFromProfile(KeycloakSession session, RealmModel realm, UserModel user, Profile profile, String profileJson, String rolesJson, Roles roles, String correlationId) {
         // Generate hash of relevant profile, group and provider data
-        String newProfileHash = generateProfileHash(realm, user, profileJson, rolesJson, imageBytes, profile, roles);
+        String newProfileHash = generateProfileHash(realm, user, profileJson, rolesJson, profile, roles);
         String currentProfileHash = user.getFirstAttribute("scoutnet_profile_hash");
         
         // Skip update if hash has not changed
@@ -216,9 +211,8 @@ public class ScoutnetAuthenticator implements Authenticator {
             user.setSingleAttribute("scouterna_email", scouternaEmail);
         }
 
-        if (imageBytes != null && imageBytes.length > 0) {
-            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-            user.setSingleAttribute("picture", "data:image/jpeg;base64," + base64Image);
+        if (profile.getAvatarUrl() != null && !profile.getAvatarUrl().trim().isEmpty()) {
+            user.setSingleAttribute("picture", profile.getAvatarUrl());
         }
 
         if (roles != null) {
@@ -245,7 +239,7 @@ public class ScoutnetAuthenticator implements Authenticator {
         user.setSingleAttribute("scoutnet_profile_hash", newProfileHash);
     }
 
-    private String generateProfileHash(RealmModel realm, UserModel user, String profileJson, String rolesJson, byte[] imageBytes, Profile profile, Roles roles) {
+    private String generateProfileHash(RealmModel realm, UserModel user, String profileJson, String rolesJson, Profile profile, Roles roles) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             
@@ -258,10 +252,6 @@ public class ScoutnetAuthenticator implements Authenticator {
             
             if (rolesJson != null) {
                 digest.update(rolesJson.getBytes(StandardCharsets.UTF_8));
-            }
-            
-            if (imageBytes != null) {
-                digest.update(String.valueOf(imageBytes.length).getBytes(StandardCharsets.UTF_8));
             }
             
             // Find scoutnet parent group
