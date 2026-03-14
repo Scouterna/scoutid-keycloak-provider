@@ -91,9 +91,8 @@ public class ScoutnetAuthenticator implements Authenticator {
             return;
         }
 
-        if (username.contains("@") || (username.matches("\\d{7}") && !username.matches("\\d{10,12}"))) {
-            // Email addresses and 7-digit member numbers don't need normalization
-        } else {
+        boolean isPersonnummer = !username.contains("@") && !(username.matches("\\d{7}") && !username.matches("\\d{10,12}"));
+        if (isPersonnummer) {
             username = normalizePersonnummer(username);
         }
 
@@ -116,8 +115,8 @@ public class ScoutnetAuthenticator implements Authenticator {
         // Step 2: Use the token to fetch the full profile
         String profileJson = scoutnetClient.getProfileJson(authResponse.getToken(), correlationId);
         if (profileJson == null) {
-            String errorMsg = String.format("Could not retrieve user profile from Scoutnet after successful login for user: %s", username);
-            failAuthentication(context, username, errorMsg, correlationId);
+            log.errorf("[%s] Could not retrieve user profile from Scoutnet after successful login for user: %s", correlationId, safeLogUsername(username, isPersonnummer));
+            failAuthentication(context, username, "loginTimeout", correlationId);
             return;
         }
         
@@ -125,8 +124,8 @@ public class ScoutnetAuthenticator implements Authenticator {
         try {
             profile = new com.fasterxml.jackson.databind.ObjectMapper().readValue(profileJson, Profile.class);
         } catch (Exception e) {
-            String errorMsg = String.format("Could not parse user profile from Scoutnet after successful login for user: %s", username);
-            failAuthentication(context, username, errorMsg, correlationId);
+            log.errorf("[%s] Could not parse user profile from Scoutnet after successful login for user: %s", correlationId, safeLogUsername(username, isPersonnummer));
+            failAuthentication(context, username, "loginTimeout", correlationId);
             return;
         }
 
@@ -410,10 +409,17 @@ public class ScoutnetAuthenticator implements Authenticator {
      * Helper to log and return an error challenge to the user.
      */
     private void failAuthentication(AuthenticationFlowContext context, String username, String messageKey, String correlationId) {
-        log.errorf("[%s] Authentication failed for user %s: %s", correlationId, username, messageKey);
+        log.errorf("[%s] Authentication failed: %s", correlationId, messageKey);
         context.getEvent().user(username).error("invalid_grant");
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS,
             context.form().setError(messageKey).createLoginUsernamePassword());
+    }
+
+    private String safeLogUsername(String username, boolean isPersonnummer) {
+        if (isPersonnummer && username.length() >= 8) {
+            return username.substring(0, 8) + "****";
+        }
+        return username;
     }
 
     private String normalizePersonnummer(String input) {
