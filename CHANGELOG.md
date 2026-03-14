@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.9.0...v0.10.0) (2026-03-14)
+
+
+### Features
+
+* picture url from profile ([a86e2f8](https://github.com/Scouterna/scoutid-keycloak-provider/commit/a86e2f8a8e6dc99eff6f11a029c3d8889f06f2de))
+
 ## [0.9.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.8.0...v0.9.0) (2026-01-20)
 
 
