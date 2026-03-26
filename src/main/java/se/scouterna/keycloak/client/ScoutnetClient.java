@@ -26,18 +26,13 @@ public class ScoutnetClient {
     private static final String PROFILE_URL = SCOUTNET_BASE_URL + "/api/get/profile";
     private static final String ROLES_URL = SCOUTNET_BASE_URL + "/api/get/user_roles";
     
-    // Shared HttpClient with optimized connection pool for high-load scenarios
+    // Shared HttpClient (HTTP/2 with multiplexing)
     private static final HttpClient SHARED_HTTP_CLIENT = HttpClient.newBuilder()
-        .connectTimeout(Duration.ofSeconds(5)) // Reduced for faster failure detection
+        .connectTimeout(Duration.ofSeconds(5))
         .executor(java.util.concurrent.ForkJoinPool.commonPool())
-        .version(HttpClient.Version.HTTP_2) // Use HTTP/2 for better performance
+        .version(HttpClient.Version.HTTP_2)
         .build();
 
-    // Connection pool is managed by the underlying implementation
-    // Default pool size is typically 2 per destination, but HTTP/2 multiplexes requests
-    // For high load, consider using a custom executor with more threads
-
-    // Shared ObjectMapper for thread safety and performance
     private static final ObjectMapper SHARED_OBJECT_MAPPER = new ObjectMapper()
         .configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true);
 

@@ -36,14 +36,14 @@ public class ScoutnetAuthenticator implements Authenticator {
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
-        log.info("Displaying login form for Scoutnet authentication.");
+        log.debug("Displaying login form for Scoutnet authentication.");
         context.challenge(context.form().createLoginUsernamePassword());
     }
 
     @Override
     public void action(AuthenticationFlowContext context) {
         String correlationId = UUID.randomUUID().toString().substring(0, 8);
-        log.infof("[%s] Processing submitted login form for Scoutnet authentication.", correlationId);
+        log.debugf("[%s] Processing submitted login form for Scoutnet authentication.", correlationId);
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         String username = formData.getFirst("username");
         String password = formData.getFirst("password");
@@ -72,14 +72,13 @@ public class ScoutnetAuthenticator implements Authenticator {
             String messageKey = authResult.getError() == AuthResult.AuthError.INVALID_CREDENTIALS
                 ? "invalidUserMessage"
                 : "loginTimeout";
-            log.warnf("[%s] Authentication failed for user: %s", correlationId, logUsername);
-            failAuthentication(context, username, messageKey, correlationId);
+            failAuthentication(context, logUsername, messageKey, correlationId);
             return;
         }
 
         AuthResponse authResponse = authResult.getAuthResponse();
         if (authResponse.getToken() == null || authResponse.getToken().isEmpty()) {
-            failAuthentication(context, username, "loginTimeout", correlationId);
+            failAuthentication(context, logUsername, "loginTimeout", correlationId);
             return;
         }
 
@@ -87,7 +86,7 @@ public class ScoutnetAuthenticator implements Authenticator {
         ScoutnetProfileSync.FetchResult fetchResult = profileSync.fetchProfileAndRoles(authResponse.getToken(), correlationId);
         if (fetchResult == null) {
             log.errorf("[%s] Could not retrieve user profile from Scoutnet for user: %s", correlationId, logUsername);
-            failAuthentication(context, username, "loginTimeout", correlationId);
+            failAuthentication(context, logUsername, "loginTimeout", correlationId);
             return;
         }
 
@@ -121,9 +120,9 @@ public class ScoutnetAuthenticator implements Authenticator {
         context.success();
     }
 
-    private void failAuthentication(AuthenticationFlowContext context, String username, String messageKey, String correlationId) {
-        log.errorf("[%s] Authentication failed: %s", correlationId, messageKey);
-        context.getEvent().user(username).error("invalid_grant");
+    private void failAuthentication(AuthenticationFlowContext context, String logUsername, String messageKey, String correlationId) {
+        log.warnf("[%s] Authentication failed for user %s: %s", correlationId, logUsername, messageKey);
+        context.getEvent().user(logUsername).error("invalid_grant");
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS,
             context.form().setError(messageKey).createLoginUsernamePassword());
     }

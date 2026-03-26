@@ -4,7 +4,7 @@ services:
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-      # KC_LOG_LEVEL: DEBUG
+      # KC_LOG_LEVEL: INFO,se.scouterna.keycloak:DEBUG
       # Certificate and key for HTTPS
       KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/conf/certs/keycloak.key.pem
       KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/conf/certs/keycloak.cert.pem

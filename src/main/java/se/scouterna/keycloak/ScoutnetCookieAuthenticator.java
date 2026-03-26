@@ -60,7 +60,7 @@ public class ScoutnetCookieAuthenticator implements Authenticator {
 
         String correlationId = UUID.randomUUID().toString().substring(0, 8);
         boolean isRememberMe = authResult.session().isRememberMe();
-        log.infof("[%s] SSO cookie valid for user: %s (rememberMe=%s)", correlationId, user.getUsername(), isRememberMe);
+        log.debugf("[%s] SSO cookie valid for user: %s (rememberMe=%s)", correlationId, user.getUsername(), isRememberMe);
 
         // Step 2: Check if fetch is needed based on throttle interval
         int fetchIntervalMinutes = getFetchIntervalMinutes(context);
@@ -68,7 +68,7 @@ public class ScoutnetCookieAuthenticator implements Authenticator {
         if (!isFetchNeeded(lastFetchStr, fetchIntervalMinutes)) {
             long lastFetch = Long.parseLong(lastFetchStr);
             long elapsedSec = (System.currentTimeMillis() - lastFetch) / 1000;
-            log.infof("[%s] Scoutnet fetch skipped for user: %s (last fetch %ds ago, interval %dm, rememberMe=%s)",
+            log.debugf("[%s] Scoutnet fetch skipped for user: %s (last fetch %ds ago, interval %dm, rememberMe=%s)",
                 correlationId, user.getUsername(), elapsedSec, fetchIntervalMinutes, isRememberMe);
             context.setUser(user);
             context.attachUserSession(authResult.session());
@@ -81,10 +81,10 @@ public class ScoutnetCookieAuthenticator implements Authenticator {
             String lastFetchTime = DateTimeFormatter.ofPattern("HH:mm:ss").format(
                 Instant.ofEpochMilli(lastFetch).atZone(ZoneId.systemDefault()));
             long elapsedSec = (System.currentTimeMillis() - lastFetch) / 1000;
-            log.infof("[%s] Scoutnet fetch needed for user: %s (last fetch at %s, %ds ago, interval %dm, rememberMe=%s)",
+            log.debugf("[%s] Scoutnet fetch needed for user: %s (last fetch at %s, %ds ago, interval %dm, rememberMe=%s)",
                 correlationId, user.getUsername(), lastFetchTime, elapsedSec, fetchIntervalMinutes, isRememberMe);
         } else {
-            log.infof("[%s] Scoutnet fetch needed for user: %s (no previous fetch, rememberMe=%s)",
+            log.debugf("[%s] Scoutnet fetch needed for user: %s (no previous fetch, rememberMe=%s)",
                 correlationId, user.getUsername(), isRememberMe);
         }
 
@@ -125,7 +125,7 @@ public class ScoutnetCookieAuthenticator implements Authenticator {
 
         context.setUser(user);
         context.attachUserSession(authResult.session());
-        log.infof("[%s] Cookie-based re-auth successful for user: %s (rememberMe=%s)", correlationId, user.getUsername(), isRememberMe);
+        log.debugf("[%s] Cookie-based re-auth successful for user: %s (rememberMe=%s)", correlationId, user.getUsername(), isRememberMe);
         context.success();
     }
 
