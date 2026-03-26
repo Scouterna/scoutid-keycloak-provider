@@ -47,7 +47,7 @@ Keycloak server and restart it
 ## Using the scoutnet based custom authentication
 1. Login to your development keycloak instance using credentials admin:admin
 2. Go to Authentication, make a duplicate of the browser flow name with name and description "ScoutID browser login"
-3. Remove Kerberos, Identity Provider Redirector and ScoutID browser login forms
+3. Remove Cookie, Kerberos, Identity Provider Redirector and ScoutID browser login forms
 4. Add execution and choose **Scoutnet Cookie Re-authenticator**. Set it to Alternative
 5. Add execution and choose **Scoutnet Password Authenticator**. Set it to Alternative
 6. Make sure the Cookie Re-authenticator is **above** the Password Authenticator (drag to reorder if needed)
@@ -124,7 +124,7 @@ Aggregate attribute values: Off
    docker compose logs -f keycloak
    ```
 
-5. **Enable debug logging** for the ScoutID provider by uncommenting in `docker-compose.yml`:
+5. **Enable debug logging** for the ScoutID provider by keeping uncommented in `docker-compose.yml`:
    ```yaml
    environment:
      KC_LOG_LEVEL: INFO,se.scouterna.keycloak:DEBUG
