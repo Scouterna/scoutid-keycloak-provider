@@ -43,11 +43,11 @@ public class ScoutnetClientIT {
         String correlationId = "test-" + System.currentTimeMillis();
 
         // Step 1: Authenticate and get a token
-        AuthResult authResult = scoutnetClient.authenticate(username, password, correlationId);
+        AuthResult authResult = scoutnetClient.authenticate(username, password, username, correlationId);
 
         assertNotNull(authResult, "Authentication result should not be null");
         assertTrue(authResult.isSuccess(), "Authentication should succeed");
-        
+
         AuthResponse authResponse = authResult.getAuthResponse();
         assertNotNull(authResponse, "Authentication response should not be null");
         assertNotNull(authResponse.getToken(), "Token should not be null");
@@ -106,7 +106,7 @@ public class ScoutnetClientIT {
         String correlationId = "test-hash-" + System.currentTimeMillis();
 
         // Authenticate and get profile data
-        AuthResult authResult = scoutnetClient.authenticate(username, password, correlationId);
+        AuthResult authResult = scoutnetClient.authenticate(username, password, username, correlationId);
         assertTrue(authResult.isSuccess(), "Authentication should succeed");
         
         String token = authResult.getAuthResponse().getToken();
@@ -172,8 +172,89 @@ public class ScoutnetClientIT {
     }
 
     @Test
+    void testPersistentTokenAuthentication() {
+        if (username == null || password == null) {
+            return;
+        }
+
+        String correlationId = "test-persistent-" + System.currentTimeMillis();
+
+        // Authenticate with app_id to get a persistent (non-expiring) token
+        AuthResult authResult = scoutnetClient.authenticate(
+            username, password, username,
+            "scoutid-keycloak-test", "ScoutID", "Integration Test",
+            correlationId);
+
+        assertNotNull(authResult, "Authentication result should not be null");
+        assertTrue(authResult.isSuccess(), "Persistent token authentication should succeed");
+
+        AuthResponse authResponse = authResult.getAuthResponse();
+        assertNotNull(authResponse.getToken(), "Persistent token should not be null");
+        assertFalse(authResponse.getToken().isEmpty(), "Persistent token should not be empty");
+
+        // Verify the persistent token works for profile fetch
+        Profile profile = scoutnetClient.getProfile(authResponse.getToken(), correlationId);
+        assertNotNull(profile, "Profile fetch with persistent token should succeed");
+        assertTrue(profile.getMemberNo() > 0, "Member number should be positive");
+
+        System.out.println("Persistent token authentication successful for member no: " + profile.getMemberNo());
+    }
+
+    @Test
+    void testTokenRefresh() {
+        if (username == null || password == null) {
+            return;
+        }
+
+        String correlationId = "test-refresh-" + System.currentTimeMillis();
+
+        // Get a persistent token first
+        AuthResult authResult = scoutnetClient.authenticate(
+            username, password, username,
+            "scoutid-keycloak-test", "ScoutID", "Integration Test",
+            correlationId);
+        assertTrue(authResult.isSuccess(), "Initial authentication should succeed");
+
+        String originalToken = authResult.getAuthResponse().getToken();
+
+        // Refresh the token
+        String refreshedToken = scoutnetClient.refreshToken(originalToken, correlationId);
+        assertNotNull(refreshedToken, "Refreshed token should not be null");
+        assertFalse(refreshedToken.isEmpty(), "Refreshed token should not be empty");
+
+        // Verify the refreshed token works
+        Profile profile = scoutnetClient.getProfile(refreshedToken, correlationId);
+        assertNotNull(profile, "Profile fetch with refreshed token should succeed");
+
+        System.out.println("Token refresh successful. Original and refreshed tokens are " +
+            (originalToken.equals(refreshedToken) ? "identical" : "different"));
+    }
+
+    @Test
+    void testTemporaryTokenWithoutAppId() {
+        if (username == null || password == null) {
+            return;
+        }
+
+        String correlationId = "test-temp-" + System.currentTimeMillis();
+
+        // Authenticate without app_id — should get a temporary (10 min) token
+        AuthResult authResult = scoutnetClient.authenticate(username, password, username, correlationId);
+        assertTrue(authResult.isSuccess(), "Temporary token authentication should succeed");
+
+        String tempToken = authResult.getAuthResponse().getToken();
+        assertNotNull(tempToken, "Temporary token should not be null");
+
+        // Verify it works for profile fetch
+        Profile profile = scoutnetClient.getProfile(tempToken, correlationId);
+        assertNotNull(profile, "Profile fetch with temporary token should succeed");
+
+        System.out.println("Temporary token (no app_id) works for profile fetch.");
+    }
+
+    @Test
     void testFailedAuthentication() {
-        AuthResult result = scoutnetClient.authenticate("invalid-username", "bad-password", "test-fail");
+        AuthResult result = scoutnetClient.authenticate("invalid-username", "bad-password", "invalid-username", "test-fail");
         assertNotNull(result, "Authentication result should not be null");
         assertFalse(result.isSuccess(), "Authentication with invalid credentials should fail");
         assertEquals(AuthResult.AuthError.INVALID_CREDENTIALS, result.getError(), "Should return invalid credentials error");
