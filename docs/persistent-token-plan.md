@@ -6,9 +6,11 @@ Currently, when a user logs in, we get a **temporary** Scoutnet token (expires i
 
 If we extend Keycloak session cookies beyond a day or two, we risk delivering stale data to downstream services. We need to control the re-authentication flow ourselves so that cookie-based logins also fetch and update data from Scoutnet.
 
-## Phase 1: Persistent tokens for cookie-based login (current)
+## Phase 1: Persistent tokens for cookie-based login ✅
 
-### Step 1: Persistent token acquisition
+Completed. The cookie authenticator validates the SSO cookie itself via `AuthenticationManager.authenticateIdentityCookie`, replacing Keycloak's built-in Cookie authenticator. This also covers Phase 2 (below).
+
+### Step 1: Persistent token acquisition ✅
 
 - Modify `ScoutnetClient.authenticate()` to accept optional `app_id`, `app_name`, `device_name` params
 - Per the Scoutnet auth API: passing `app_id` (10+ chars) makes the token non-expiring; omitting it gives a 10-minute token
@@ -17,7 +19,7 @@ If we extend Keycloak session cookies beyond a day or two, we risk delivering st
 - `device_name`: Keycloak server URL (e.g. `https://id.example.se`)
 - Add `ScoutnetClient.refreshToken(token, correlationId)` for `/api/refresh_token`
 
-### Step 2: Secure token storage via CredentialModel
+### Step 2: Secure token storage via CredentialModel ✅
 
 - Create `ScoutnetTokenCredentialProvider` implementing `CredentialProvider<CredentialModel>`
   - Custom credential type: `"scoutnet-token"`
@@ -26,35 +28,34 @@ If we extend Keycloak session cookies beyond a day or two, we risk delivering st
 - Register via `META-INF/services/org.keycloak.credential.CredentialProviderFactory`
 - In `ScoutnetAuthenticator.action()`, after successful login, store/update the token via this provider (not as a user attribute)
 
-### Step 3: Cookie-based re-authentication authenticator
+### Step 3: Cookie-based re-authentication authenticator ✅
 
-- Create `ScoutnetCookieAuthenticator` implementing `Authenticator`
+- Created `ScoutnetCookieAuthenticator` implementing `Authenticator`
+  - Validates the SSO cookie directly via `AuthenticationManager.authenticateIdentityCookie` (replaces Keycloak's built-in Cookie authenticator)
   - Placed **before** the password authenticator in the auth flow
-  - On `authenticate()`: if user already has a Keycloak session (cookie), look up the user, retrieve their stored `scoutnet-token` credential
-  - Use the persistent token to fetch fresh profile + roles from Scoutnet
+  - On `authenticate()`: if cookie is valid, look up the user, retrieve their stored `scoutnet-token` credential
+  - Use the persistent token to fetch fresh profile + roles from Scoutnet (throttled by configurable interval, default 60 min)
   - If token works → full profile sync (same as password login, including hash comparison and group sync), call `context.success()`
   - If token is expired/revoked → try `refreshToken()` → if that also fails, fall through to password authenticator via `context.attempted()`
-- Create `ScoutnetCookieAuthenticatorFactory` to register it
+  - Persistent tokens are only stored when "Remember Me" is checked (integrates with Keycloak's remember-me session lifetime)
+- Created `ScoutnetCookieAuthenticatorFactory` to register it
 
-### Step 4: Auth flow configuration
+### Step 4: Auth flow configuration ✅
 
-The intended Keycloak browser flow:
+The Keycloak browser flow (no built-in Cookie authenticator needed):
 
-1. **Cookie** (built-in) — checks if SSO cookie exists, sets the user on the context
-2. **ScoutnetCookieAuthenticator** (ALTERNATIVE) — if user exists from cookie, re-fetch data with persistent token, full sync
-3. **ScoutnetAuthenticator** (ALTERNATIVE) — fallback to username+password form
+1. **ScoutnetCookieAuthenticator** (ALTERNATIVE) — validates SSO cookie, re-fetches data with persistent token
+2. **ScoutnetAuthenticator** (ALTERNATIVE) — fallback to username+password form
 
-In most cases the cookie authenticator will compare the profile hash and skip the update, making it fast.
+### Step 5: Tests & docs ✅
 
-### Step 5: Tests & docs
+- Integration tests for `authenticateWithAppId` + `refreshToken` against real Scoutnet
+- Updated README with new flow setup instructions and debug logging guide
+- Updated project-context.md with new architecture
 
-- Unit tests for token credential storage/retrieval logic
-- Integration test for `authenticateWithAppId` + `refreshToken` against real Scoutnet
-- Update README with new flow setup instructions
+## Phase 2: Replace Keycloak's built-in cached login ✅
 
-## Phase 2: Replace Keycloak's built-in cached login (future)
-
-Replace Keycloak's default cookie/session mechanism with a custom one that always auto-fetches data from Scoutnet on session resumption. This ensures no session ever serves stale data, regardless of how Keycloak's built-in session caching behaves.
+Completed as part of Phase 1. The `ScoutnetCookieAuthenticator` validates the SSO cookie directly and always fetches fresh data from Scoutnet (throttled by configurable interval). No built-in Cookie authenticator is used.
 
 ## Phase 3: External identity provider login with persistent token (future)
 
