@@ -1,1 +1,2 @@
 se.scouterna.keycloak.ScoutnetAuthenticatorFactory
+se.scouterna.keycloak.ScoutnetCookieAuthenticatorFactory

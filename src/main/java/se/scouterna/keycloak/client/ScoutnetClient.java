@@ -22,6 +22,7 @@ public class ScoutnetClient {
     private static final Logger log = Logger.getLogger(ScoutnetClient.class);
     private static final String SCOUTNET_BASE_URL = System.getenv().getOrDefault("SCOUTNET_BASE_URL", "https://scoutnet.se");
     private static final String AUTH_URL = SCOUTNET_BASE_URL + "/api/authenticate";
+    private static final String REFRESH_TOKEN_URL = SCOUTNET_BASE_URL + "/api/refresh_token";
     private static final String PROFILE_URL = SCOUTNET_BASE_URL + "/api/get/profile";
     private static final String ROLES_URL = SCOUTNET_BASE_URL + "/api/get/user_roles";
     
@@ -73,11 +74,18 @@ public class ScoutnetClient {
         }
     }
 
-    public AuthResult authenticate(String username, String password, String correlationId) {
+    public AuthResult authenticate(String username, String password, String logUsername, String correlationId) {
+        return authenticate(username, password, logUsername, null, null, null, correlationId);
+    }
+
+    public AuthResult authenticate(String username, String password, String logUsername, String appId, String appName, String deviceName, String correlationId) {
         try {
             Map<String, String> payload = new HashMap<>();
             payload.put("username", username);
             payload.put("password", password);
+            if (appId != null) payload.put("app_id", appId);
+            if (appName != null) payload.put("app_name", appName);
+            if (deviceName != null) payload.put("device_name", deviceName);
 
             String jsonPayload = SHARED_OBJECT_MAPPER.writeValueAsString(payload);
             
@@ -85,7 +93,7 @@ public class ScoutnetClient {
                 .uri(URI.create(AUTH_URL))
                 .header("Content-Type", "application/json")
                 .header("Accept", "application/json")
-                .timeout(Duration.ofSeconds(10)) // Reduced from 30s for faster failure detection
+                .timeout(Duration.ofSeconds(10))
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                 .build();
 
@@ -98,7 +106,7 @@ public class ScoutnetClient {
                 String errorType = getErrorType(response.statusCode());
                 String errorDetail = tryParseErrorResponse(response.body());
                 log.debugf("[%s] Scoutnet authentication failed for user %s. Status: %d, Error: %s, Detail: %s", 
-                    correlationId, username, response.statusCode(), errorType, errorDetail);
+                    correlationId, logUsername, response.statusCode(), errorType, errorDetail);
                 
                 AuthResult.AuthError authError = switch (response.statusCode()) {
                     case 401, 403 -> AuthResult.AuthError.INVALID_CREDENTIALS;
@@ -107,13 +115,13 @@ public class ScoutnetClient {
                 return AuthResult.failure(authError);
             }
         } catch (java.net.http.HttpTimeoutException e) {
-            log.errorf("[%s] Scoutnet API timeout during authentication for user %s: %s", correlationId, username, e.getMessage());
+            log.errorf("[%s] Scoutnet API timeout during authentication for user %s: %s", correlationId, logUsername, e.getMessage());
             return AuthResult.failure(AuthResult.AuthError.SERVICE_UNAVAILABLE);
         } catch (java.net.ConnectException e) {
-            log.errorf("[%s] Cannot connect to Scoutnet API for user %s: %s", correlationId, username, e.getMessage());
+            log.errorf("[%s] Cannot connect to Scoutnet API for user %s: %s", correlationId, logUsername, e.getMessage());
             return AuthResult.failure(AuthResult.AuthError.SERVICE_UNAVAILABLE);
         } catch (Exception e) {
-            log.errorf("[%s] Unexpected error during Scoutnet authentication for user %s: %s", correlationId, username, e.getClass().getSimpleName());
+            log.errorf("[%s] Unexpected error during Scoutnet authentication for user %s: %s", correlationId, logUsername, e.getClass().getSimpleName());
             return AuthResult.failure(AuthResult.AuthError.SERVICE_UNAVAILABLE);
         }
     }
@@ -220,6 +228,45 @@ public class ScoutnetClient {
             return null;
         } catch (Exception e) {
             log.errorf("[%s] Unexpected error during Scoutnet roles fetch: %s", correlationId, e.getClass().getSimpleName());
+            return null;
+        }
+    }
+
+    /**
+     * Refreshes a persistent Scoutnet token via /api/refresh_token.
+     *
+     * @return The new token string, or null if refresh failed.
+     */
+    public String refreshToken(String currentToken, String correlationId) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(REFRESH_TOKEN_URL))
+                .header("Authorization", "Bearer " + currentToken)
+                .header("Accept", "application/json")
+                .timeout(Duration.ofSeconds(10))
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+
+            HttpResponse<String> response = SHARED_HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                String errorType = getErrorType(response.statusCode());
+                String errorDetail = tryParseErrorResponse(response.body());
+                log.warnf("[%s] Scoutnet token refresh failed. Status: %d, Error: %s, Detail: %s",
+                    correlationId, response.statusCode(), errorType, errorDetail);
+                return null;
+            }
+
+            AuthResponse authResponse = SHARED_OBJECT_MAPPER.readValue(response.body(), AuthResponse.class);
+            return authResponse != null ? authResponse.getToken() : null;
+        } catch (java.net.http.HttpTimeoutException e) {
+            log.errorf("[%s] Scoutnet API timeout during token refresh: %s", correlationId, e.getMessage());
+            return null;
+        } catch (java.net.ConnectException e) {
+            log.errorf("[%s] Cannot connect to Scoutnet API for token refresh: %s", correlationId, e.getMessage());
+            return null;
+        } catch (Exception e) {
+            log.errorf("[%s] Unexpected error during Scoutnet token refresh: %s", correlationId, e.getClass().getSimpleName());
             return null;
         }
     }

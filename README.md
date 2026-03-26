@@ -32,7 +32,7 @@ curl -fsSL -o keycloak-theme-for-kc-all-other-versions.jar https://github.com/Sc
 docker compose up
 
 # If you want you can run it in the background (daemonized) using the -d flag
-docker compose -d
+docker compose up -d
 
 # And to stop it if you're running it in the background
 docker compose down
@@ -47,10 +47,14 @@ Keycloak server and restart it
 ## Using the scoutnet based custom authentication
 1. Login to your development keycloak instance using credentials admin:admin
 2. Go to Authentication, make a duplicate of the browser flow name with name and description "ScoutID browser login"
-3. Remove Kerberos, Identity Provider Redirector and Scoutid browser login forms
-4. Add execution and choose Scoutnet Password Authenticator. Set it to Alternative
-5. Choose action -> Bind flow and bind it to the Browser flow. Now it's the new default login method
-6. Go to Clients -> security-admin-console -> Advanced -> Authentication flow overrides and set Browser Flow to browser. Save. Otherwise it will now be impossible to login to the keycloak admin interface.
+3. Remove Kerberos, Identity Provider Redirector and ScoutID browser login forms
+4. Add execution and choose **Scoutnet Cookie Re-authenticator**. Set it to Alternative
+5. Add execution and choose **Scoutnet Password Authenticator**. Set it to Alternative
+6. Make sure the Cookie Re-authenticator is **above** the Password Authenticator (drag to reorder if needed)
+7. Choose action -> Bind flow and bind it to the Browser flow. Now it's the new default login method
+8. Go to Clients -> security-admin-console -> Advanced -> Authentication flow overrides and set Browser Flow to browser. Save. Otherwise it will now be impossible to login to the keycloak admin interface.
+
+The Cookie Re-authenticator validates the Keycloak SSO cookie and uses a stored persistent Scoutnet token to fetch fresh profile data on every session resumption. If the cookie is invalid or no token is stored, it falls through to the Password Authenticator which shows the login form.
 
 You can now verify login using this test interface
 http://localhost:8080/realms/master/account
@@ -64,7 +68,7 @@ In order to see our custom fields, you need to make them visible, and also inclu
 Go into Realm settings, enter tab Theme and choose ScoutID.
 
 ### Using scoutid as sub
-For some client applications, a known sub is needed to prepopulate members before they are created by keycloak, or for compitability with other login methods. The sub is the unique user id used by OIDC, by default created when a user is initialised in keycloak. Note that using scoutnet member number as sub can cause problems when using a combined login method (upcoming feature). If you want to use the scoutnet member id as sub:
+For some client applications, a known sub is needed to prepopulate members before they are created by keycloak, or for compatibility with other login methods. The sub is the unique user id used by OIDC, by default created when a user is initialised in keycloak. Note that using scoutnet member number as sub can cause problems when using a combined login method (upcoming feature). If you want to use the scoutnet member id as sub:
 1. Create the client
 2. Under client scopes enter [client_name]-dedicated to change client specific default scope
 3. Add mapper -> By configuration -> User attribute
@@ -90,6 +94,7 @@ Aggregate attribute values: Off
    ```bash
    # Run all unit tests
    ./mvnw test
+   ```
 
 2. **Run integration tests** to verify basic functionality:
    ```bash
@@ -114,18 +119,18 @@ Aggregate attribute values: Off
 
    If this is your first time running the docker container, you need to follow the [above setup instructions](#using-the-scoutnet-based-custom-authentication) first.
 
-3. **Check Keycloak logs** for correlation IDs and error details:
+4. **Check Keycloak logs** for correlation IDs and error details:
    ```bash
    docker compose logs -f keycloak
    ```
 
-4. **Enable debug logging** by adding to `docker-compose.yml`:
+5. **Enable debug logging** by adding to `docker-compose.yml`:
    ```yaml
    environment:
      KC_LOG_LEVEL: DEBUG
    ```
 
-5. **Common error patterns**:
+6. **Common error patterns**:
    - `404 Not Found`: API endpoint doesn't exist (check SCOUTNET_BASE_URL)
    - `invalidUserMessage`: Wrong credentials or user not found
    - `loginTimeout`: Service unavailable or network issues
