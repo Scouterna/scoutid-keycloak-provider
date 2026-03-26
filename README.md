@@ -124,11 +124,15 @@ Aggregate attribute values: Off
    docker compose logs -f keycloak
    ```
 
-5. **Enable debug logging** by adding to `docker-compose.yml`:
+5. **Enable debug logging** for the ScoutID provider by uncommenting in `docker-compose.yml`:
    ```yaml
    environment:
-     KC_LOG_LEVEL: DEBUG
+     KC_LOG_LEVEL: INFO,se.scouterna.keycloak:DEBUG
    ```
+   This enables DEBUG only for the ScoutID provider while keeping Keycloak's own logging at INFO. To enable full Keycloak debug logging, use `KC_LOG_LEVEL: DEBUG` (very verbose).
+
+   At **INFO** level (default), you will see: login success/failure, first-time user creation, and profile data updates.
+   At **DEBUG** level, you will additionally see: cookie validation details, fetch throttle decisions with timestamps, remember-me status, profile hash comparisons, and token storage events.
 
 6. **Common error patterns**:
    - `404 Not Found`: API endpoint doesn't exist (check SCOUTNET_BASE_URL)

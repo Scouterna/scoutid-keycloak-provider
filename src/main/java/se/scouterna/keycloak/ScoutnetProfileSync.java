@@ -86,7 +86,7 @@ public class ScoutnetProfileSync {
                 log.warnf("[%s] Could not parse user roles from Scoutnet: %s", correlationId, e.getMessage());
             }
         } else {
-            log.infof("[%s] Could not retrieve user roles from Scoutnet.", correlationId);
+            log.debugf("[%s] Could not retrieve user roles from Scoutnet.", correlationId);
         }
 
         return new FetchResult(profile, profileJson, roles, rolesJson);
@@ -107,7 +107,7 @@ public class ScoutnetProfileSync {
         String currentProfileHash = user.getFirstAttribute("scoutnet_profile_hash");
 
         if (newProfileHash.equals(currentProfileHash)) {
-            log.infof("[%s] Profile hash unchanged (%s), skipping update for user: %s",
+            log.debugf("[%s] Profile hash unchanged (%s), skipping update for user: %s",
                 correlationId, newProfileHash.substring(0, 8), user.getUsername());
             return;
         }
