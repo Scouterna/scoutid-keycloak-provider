@@ -49,6 +49,7 @@ Keycloak server and restart it
 2. Go to Authentication, make a duplicate of the browser flow name with name and description "ScoutID browser login"
 3. Remove Cookie, Kerberos, Identity Provider Redirector and ScoutID browser login forms
 4. Add execution and choose **Scoutnet Cookie Re-authenticator**. Set it to Alternative
+   - By pressing the settings gear, it is possible to change fetch-interval, which specifies how often we need to refetch the profile from Scoutnet to ensure fresh data. We can setup multiple authentication flows to apply different settings, for example high security applications where accesses need to be checked more often. Default: 60 minutes.
 5. Add execution and choose **Scoutnet Password Authenticator**. Set it to Alternative
 6. Make sure the Cookie Re-authenticator is **above** the Password Authenticator (drag to reorder if needed)
 7. Choose action -> Bind flow and bind it to the Browser flow. Now it's the new default login method
