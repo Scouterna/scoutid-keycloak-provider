@@ -66,26 +66,30 @@ public class ScoutnetCookieAuthenticator implements Authenticator {
         int fetchIntervalMinutes = getFetchIntervalMinutes(context);
         String lastFetchStr = user.getFirstAttribute(LAST_FETCH_ATTRIBUTE);
         if (!isFetchNeeded(lastFetchStr, fetchIntervalMinutes)) {
-            long lastFetch = Long.parseLong(lastFetchStr);
-            long elapsedSec = (System.currentTimeMillis() - lastFetch) / 1000;
-            log.debugf("[%s] Scoutnet fetch skipped for user: %s (last fetch %ds ago, interval %dm, rememberMe=%s)",
-                correlationId, user.getUsername(), elapsedSec, fetchIntervalMinutes, isRememberMe);
+            if (log.isDebugEnabled()) {
+                long lastFetch = Long.parseLong(lastFetchStr);
+                long elapsedSec = (System.currentTimeMillis() - lastFetch) / 1000;
+                log.debugf("[%s] Scoutnet fetch skipped for user: %s (last fetch %ds ago, interval %dm, rememberMe=%s)",
+                    correlationId, user.getUsername(), elapsedSec, fetchIntervalMinutes, isRememberMe);
+            }
             context.setUser(user);
             context.attachUserSession(authResult.session());
             context.success();
             return;
         }
 
-        if (lastFetchStr != null) {
-            long lastFetch = Long.parseLong(lastFetchStr);
-            String lastFetchTime = DateTimeFormatter.ofPattern("HH:mm:ss").format(
-                Instant.ofEpochMilli(lastFetch).atZone(ZoneId.systemDefault()));
-            long elapsedSec = (System.currentTimeMillis() - lastFetch) / 1000;
-            log.debugf("[%s] Scoutnet fetch needed for user: %s (last fetch at %s, %ds ago, interval %dm, rememberMe=%s)",
-                correlationId, user.getUsername(), lastFetchTime, elapsedSec, fetchIntervalMinutes, isRememberMe);
-        } else {
-            log.debugf("[%s] Scoutnet fetch needed for user: %s (no previous fetch, rememberMe=%s)",
-                correlationId, user.getUsername(), isRememberMe);
+        if (log.isDebugEnabled()) {
+            if (lastFetchStr != null) {
+                long lastFetch = Long.parseLong(lastFetchStr);
+                String lastFetchTime = DateTimeFormatter.ofPattern("HH:mm:ss").format(
+                    Instant.ofEpochMilli(lastFetch).atZone(ZoneId.systemDefault()));
+                long elapsedSec = (System.currentTimeMillis() - lastFetch) / 1000;
+                log.debugf("[%s] Scoutnet fetch needed for user: %s (last fetch at %s, %ds ago, interval %dm, rememberMe=%s)",
+                    correlationId, user.getUsername(), lastFetchTime, elapsedSec, fetchIntervalMinutes, isRememberMe);
+            } else {
+                log.debugf("[%s] Scoutnet fetch needed for user: %s (no previous fetch, rememberMe=%s)",
+                    correlationId, user.getUsername(), isRememberMe);
+            }
         }
 
         // Step 3: Retrieve stored persistent token
@@ -137,7 +141,7 @@ public class ScoutnetCookieAuthenticator implements Authenticator {
                 String value = configMap.get(ScoutnetCookieAuthenticatorFactory.CONFIG_FETCH_INTERVAL);
                 if (value != null) {
                     try {
-                        return Integer.parseInt(value.trim());
+                        return Math.max(0, Integer.parseInt(value.trim()));
                     } catch (NumberFormatException e) {
                         // fall through to default
                     }
@@ -147,7 +151,7 @@ public class ScoutnetCookieAuthenticator implements Authenticator {
         return ScoutnetCookieAuthenticatorFactory.DEFAULT_FETCH_INTERVAL_MINUTES;
     }
 
-    private boolean isFetchNeeded(String lastFetchStr, int intervalMinutes) {
+    boolean isFetchNeeded(String lastFetchStr, int intervalMinutes) {
         if (lastFetchStr == null) return true;
 
         try {

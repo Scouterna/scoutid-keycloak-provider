@@ -58,6 +58,7 @@ public class ScoutnetCookieAuthenticatorFactory implements AuthenticatorFactory 
         fetchInterval.setLabel("Fetch interval (minutes)");
         fetchInterval.setHelpText("Minimum time between Scoutnet profile fetches for the same user. "
             + "During this interval, cookie-based logins will succeed without contacting Scoutnet. "
+            + "Set to 0 to always fetch fresh data (no caching). "
             + "Default: " + DEFAULT_FETCH_INTERVAL_MINUTES + " minutes.");
         fetchInterval.setType(ProviderConfigProperty.STRING_TYPE);
         fetchInterval.setDefaultValue(String.valueOf(DEFAULT_FETCH_INTERVAL_MINUTES));
