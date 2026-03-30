@@ -18,6 +18,7 @@ public class ScoutnetTokenCredentialProvider implements CredentialProvider<Crede
 
     public static final String CREDENTIAL_TYPE = "scoutnet-token";
     private static final Logger log = Logger.getLogger(ScoutnetTokenCredentialProvider.class);
+    private static final com.fasterxml.jackson.databind.ObjectMapper OBJECT_MAPPER = new com.fasterxml.jackson.databind.ObjectMapper();
 
     private final KeycloakSession session;
 
@@ -77,7 +78,7 @@ public class ScoutnetTokenCredentialProvider implements CredentialProvider<Crede
 
         String credentialData;
         try {
-            credentialData = new com.fasterxml.jackson.databind.ObjectMapper()
+            credentialData = OBJECT_MAPPER
                 .writeValueAsString(java.util.Map.of("app_id", appId != null ? appId : ""));
         } catch (Exception e) {
             credentialData = "{}";

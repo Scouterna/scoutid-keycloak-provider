@@ -188,6 +188,7 @@ public class ScoutnetProfileSync {
             if (scoutnetParent != null) {
                 user.getGroupsStream()
                     .filter(group -> scoutnetParent.equals(group.getParent()))
+                    .sorted(java.util.Comparator.comparing(GroupModel::getName))
                     .forEach(group -> {
                         for (String attribute : TRACKED_ATTRIBUTES) {
                             String value = group.getFirstAttribute(attribute);
@@ -305,6 +306,12 @@ public class ScoutnetProfileSync {
 
     private static String getProviderVersion() {
         String version = ScoutnetProfileSync.class.getPackage().getImplementationVersion();
-        return version != null ? version : "dev";
+        if (version != null) {
+            log.infof("ScoutID provider version: %s", version);
+            return version;
+        } else {
+            log.info("ScoutID version unknown (no manifest version found)");
+            return "dev";
+        }
     }
 }
