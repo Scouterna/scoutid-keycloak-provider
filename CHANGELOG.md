@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.11.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.10.0...v0.11.0) (2026-03-30)
+
+
+### Features
+
+* persistent Scoutnet tokens with cookie-based re-authentication ([784afec](https://github.com/Scouterna/scoutid-keycloak-provider/commit/784afec62b38afa7421702b195bf2d0a056fd199))
+
+
+### Bug Fixes
+
+* improve cookie authenticator robustness and fix token storage docs ([5b3cb03](https://github.com/Scouterna/scoutid-keycloak-provider/commit/5b3cb03329f366670635b9f598ca791c3ecd9a64))
+
+
+### Documentation
+
+* fix small inconsistencies ([fbd2f78](https://github.com/Scouterna/scoutid-keycloak-provider/commit/fbd2f78ae80eb60fca003954868eb7e636a25688))
+* update plan with completed phases and debug logging guide ([eeaf5ca](https://github.com/Scouterna/scoutid-keycloak-provider/commit/eeaf5ca517453c0dc6bad4b2b8529af23ba41016))
+
 ## [0.10.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.9.0...v0.10.0) (2026-03-14)
 
 
