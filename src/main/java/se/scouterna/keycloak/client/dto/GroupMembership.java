@@ -9,10 +9,14 @@ public class GroupMembership {
     private boolean isPrimary;
     @JsonProperty("group")
     private Group group;
+    @JsonProperty("troop")
+    private Troop troop;
 
     // Getters and Setters
     public boolean isPrimary() { return isPrimary; }
     public void setPrimary(boolean primary) { isPrimary = primary; }
     public Group getGroup() { return group; }
     public void setGroup(Group group) { this.group = group; }
+    public Troop getTroop() { return troop; }
+    public void setTroop(Troop troop) { this.troop = troop; }
 }
