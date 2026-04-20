@@ -12,6 +12,24 @@ ScoutID Keycloak är Scouternas centrala identitetshanteringssystem som använde
 
 Systemet möjliggör för Scouternas olika tjänster att använda samma inloggningsuppgifter (personnummer och lösenord från Scoutnet) utan att behöva hantera autentisering själva. Scoutkårer och andra delar av scoutrörelsen är också varmt välkomna.
 
+## Tillgängliga ScoutID-attribut
+
+När `scoutnet`-scopet är konfigurerat (se [provider-repositoryt](https://github.com/Scouterna/scoutid-keycloak-provider) för importinstruktioner) får klienter tillgång till följande claims:
+
+| Claim | Typ | Beskrivning |
+|-------|-----|-------------|
+| `scoutnet_member_no` | String | Scoutnet-medlemsnummer |
+| `birthdate` | String | Födelsedatum (YYYY-MM-DD) |
+| `scoutnet_primary_group_name` | String | Namn på primär scoutkår |
+| `scoutnet_primary_group_no` | String | ID för primär scoutkår |
+| `scoutnet_roles` | String[] | Roller i formatet `typ:typId:rollnyckel` (t.ex. `group:766:it_manager`) |
+| `scoutnet_troops` | JSON | Avdelningar: `[{"id":17443,"name":"Yggdrasil","group_no":"766"}]` |
+| `scoutnet_definitions` | JSON | Definitionstabell för ID:n och nycklar till läsbara namn: `{"groups":{"766":"Mälarscouterna"},"troops":{"17443":"Yggdrasil"},"roles":{"it_manager":"IT Manager"}}` |
+| `scouterna_email` | String | Scouterna.se e-postadress (om tillgänglig) |
+| `picture` | String | URL till profilbild |
+
+Klienter som behöver ScoutID-data lägger till `scoutnet`-scopet under **Clients** → klient → **Client scopes** → **Add client scope**.
+
 ## Autentisering och auktorisering
 
 **Autentisering** handlar om att verifiera vem användaren är (personnummer + lösenord via Scoutnet).

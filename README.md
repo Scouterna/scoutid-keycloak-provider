@@ -62,8 +62,45 @@ http://localhost:8080/realms/master/account
 
 In order to see our custom fields, you need to make them visible, and also include them in oidc response.
 1. Go to Realm settings -> User profile -> JSON editor and replace the json with the content of config_support/user_profile.json
-2. In order to include a field into a oidc response, enter Client scopes -> profile -> Mappers -> birthdate and set user attribute to scoutnet_dob
-3. Repeat for the other fields as well.
+2. Import the `scoutnet` client scope to make all ScoutID attributes available as OIDC claims. See [Importing the scoutnet client scope](#importing-the-scoutnet-client-scope) below.
+
+### Importing the scoutnet client scope
+
+The `scoutnet` client scope bundles all ScoutID attribute mappers (member number, roles, troops, translations, etc.) so you only configure them once. Clients that need ScoutID data just add this scope.
+
+**Creating the scope:**
+
+1. Go to **Client scopes** → **Create client scope**
+2. Name: `scoutnet`, Protocol: `OpenID Connect`, Type: `Optional`
+3. Click **Save**
+
+**Adding mappers:**
+
+Go to the new `scoutnet` scope → **Mappers** → **Configure a new mapper** → **User Attribute** and add each of the following:
+
+| Name | User Attribute | Token Claim Name | Claim JSON Type | Multivalued |
+|------|---------------|-----------------|-----------------|-------------|
+| scoutnet_member_no | `scoutnet_member_no` | `scoutnet_member_no` | String | Off |
+| scoutnet_dob | `scoutnet_dob` | `birthdate` | String | Off |
+| scoutnet_primary_group_name | `scoutnet_primary_group_name` | `scoutnet_primary_group_name` | String | Off |
+| scoutnet_primary_group_no | `scoutnet_primary_group_no` | `scoutnet_primary_group_no` | String | Off |
+| roles | `roles` | `scoutnet_roles` | String | On |
+| scoutnet_troops | `scoutnet_troops` | `scoutnet_troops` | JSON | Off |
+| scoutnet_definitions | `scoutnet_definitions` | `scoutnet_definitions` | JSON | Off |
+| scouterna_email | `scouterna_email` | `scouterna_email` | String | Off |
+| picture | `picture` | `picture` | String | Off |
+| group_emails_json | `group_emails_json` | `group_emails_json` | JSON | Off |
+
+For each mapper, enable: **Add to ID token**, **Add to access token**, **Add to userinfo**, and **Add to token introspection**.
+
+To see example of a login request using this client scope, look at config_support/access_token_example.json and config_support/id_token_example.json.
+
+**Adding the scope to a client:**
+
+1. Go to **Clients** → your client → **Client scopes**
+2. Click **Add client scope** → select `scoutnet` → **Add** as Default (always included) or Optional (client must request it)
+
+When added as Default, the ScoutID attributes are automatically included in tokens. When Optional, the client requests them with `scope=openid scoutnet`.
 
 ### Enabling the ScoutID theme
 Go into Realm settings, enter tab Theme and choose ScoutID.

@@ -240,6 +240,42 @@
         ]
       },
       "multivalued": false
+    },
+    {
+      "name": "scoutnet_troops",
+      "displayName": "Avdelningar",
+      "validations": {},
+      "annotations": {
+        "inputType": "textarea"
+      },
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "scoutnet_definitions",
+      "displayName": "Definitioner (grupper, avdelningar, roller)",
+      "validations": {},
+      "annotations": {
+        "inputType": "textarea"
+      },
+      "permissions": {
+        "view": [
+          "admin",
+          "user"
+        ],
+        "edit": [
+          "admin"
+        ]
+      },
+      "multivalued": false
     }
   ],
   "groups": [

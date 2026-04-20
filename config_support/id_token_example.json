@@ -1,0 +1,60 @@
+{
+  "exp": 1777401022,
+  "iat": 1777400962,
+  "auth_time": 1777400937,
+  "jti": "abc12345-abc1-abc1-abc1-abc123456789",
+  "iss": "http://localhost:8080/realms/master",
+  "aud": "scout-test-client",
+  "sub": "abc12345-abc1-abc1-abc1-abc123456789",
+  "typ": "ID",
+  "azp": "scout-test-client",
+  "nonce": "abcdefghijk",
+  "sid": "2ydwZZzY7QLyQRPJwshpqA==",
+  "at_hash": "PiuEcolSMoVUUpe5YeQNsA==",
+  "acr": "1",
+  "email_verified": false,
+  "scoutnet_member_no": "9876543",
+  "scoutnet_definitions": {
+    "groups": {
+      "000": "Föreningen för Frustunaby",
+      "999": "Scoutkåren Mälarscouterna"
+    },
+    "troops": {
+      "12345": "Yggdrasil"
+    },
+    "roles": {
+      "recruitment_responsible": "recruitment_responsible",
+      "it_manager": "IT Manager",
+      "group_committee_2": "Grupp2",
+      "nomination_committee": "Nomination committee"
+    }
+  },
+  "scoutnet_primary_group_no": "999",
+  "scoutnet_troops": [
+    {
+      "id": 12345,
+      "name": "Yggdrasil",
+      "group_no": "999"
+    }
+  ],
+  "preferred_username": "scoutnet|9876543",
+  "scoutnet_dob": "1970-01-01",
+  "given_name": "Teo",
+  "picture": "https://scoutnet.se/user_avatar/123456/auth_key/036de1af/avatar.png",
+  "group_emails_json": {
+    "766": "teo@example.com"
+  },
+  "scoutnet_roles": [
+    "group:999:group_committee_2",
+    "group:999:it_manager",
+    "group:999:nomination_committee",
+    "group:999:recruitment_responsible",
+    "organisation:111:board_member",
+    "troop:12345:vice_leader"
+  ],
+  "name": "Teo MS",
+  "scoutnet_primary_group_name": "Scoutkåren Mälarscouterna",
+  "family_name": "MS",
+  "scouterna_email": "teo@scout.example.com",
+  "email": "teo@ms.example.com"
+}

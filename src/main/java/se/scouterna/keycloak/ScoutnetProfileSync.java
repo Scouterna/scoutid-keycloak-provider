@@ -12,6 +12,8 @@ import se.scouterna.keycloak.client.dto.Group;
 import se.scouterna.keycloak.client.dto.GroupMembership;
 import se.scouterna.keycloak.client.dto.Profile;
 import se.scouterna.keycloak.client.dto.Roles;
+import se.scouterna.keycloak.client.dto.RoleSummaryEntry;
+import se.scouterna.keycloak.client.dto.Troop;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -151,18 +153,33 @@ public class ScoutnetProfileSync {
         }
 
         if (profile.getMemberships() != null && profile.getMemberships().getGroup() != null) {
-            profile.getMemberships().getGroup().entrySet().stream()
+            Map<String, GroupMembership> groups = profile.getMemberships().getGroup();
+
+            groups.entrySet().stream()
                 .filter(entry -> entry.getValue().isPrimary())
                 .findFirst()
                 .ifPresent(primaryEntry -> {
                     String membershipKey = primaryEntry.getKey();
-                    GroupMembership primaryMembership = primaryEntry.getValue();
-                    Group group = primaryMembership.getGroup();
+                    Group group = primaryEntry.getValue().getGroup();
                     if (group != null) {
                         user.setSingleAttribute("scoutnet_primary_group_name", group.getName());
                         user.setSingleAttribute("scoutnet_primary_group_no", membershipKey);
                     }
                 });
+
+            String troopsJson = buildTroopsJson(groups);
+            if (troopsJson != null) {
+                user.setSingleAttribute("scoutnet_troops", troopsJson);
+            } else {
+                user.removeAttribute("scoutnet_troops");
+            }
+        }
+
+        String definitionsJson = buildDefinitionsJson(profile);
+        if (definitionsJson != null) {
+            user.setSingleAttribute("scoutnet_definitions", definitionsJson);
+        } else {
+            user.removeAttribute("scoutnet_definitions");
         }
 
         user.setSingleAttribute("scoutnet_profile_hash", newProfileHash);
@@ -212,26 +229,46 @@ public class ScoutnetProfileSync {
 
     private void updateGroupEmailAttributes(KeycloakSession session, RealmModel realm, UserModel user, String firstLast) {
         Set<String> processedAttributes = new HashSet<>();
+        // Create a map to hold the {groupId: email} pairs
+        Map<String, String> groupEmailMap = new HashMap<>();
 
         user.getGroupsStream()
             .filter(group -> group.getParent() != null && "scoutnet".equals(group.getParent().getName()))
             .forEach(group -> {
                 String domain = group.getFirstAttribute("domain");
-                String attributeName = "group_email_" + group.getName();
+                String groupId = group.getName(); // e.g., "766"
+                String attributeName = "group_email_" + groupId;
                 processedAttributes.add(attributeName);
 
                 if (isValidDomain(domain)) {
                     domain = domain.trim();
                     String baseEmail = firstLast + "@" + domain;
-                    String uniqueEmail = ensureUniqueEmail(session, realm, user, baseEmail, group.getName());
+                    String uniqueEmail = ensureUniqueEmail(session, realm, user, baseEmail, groupId);
+                    
                     user.setSingleAttribute(attributeName, uniqueEmail);
+                    
+                    // Add to our collection for the JSON object
+                    groupEmailMap.put(groupId, uniqueEmail);
                 } else {
                     user.removeAttribute(attributeName);
                 }
             });
 
+        // Serialize the map to a JSON string and store it in a single attribute
+        try {
+            if (!groupEmailMap.isEmpty()) {
+                String jsonValue = OBJECT_MAPPER.writeValueAsString(groupEmailMap);
+                user.setSingleAttribute("group_emails_json", jsonValue);
+            } else {
+                user.removeAttribute("group_emails_json");
+            }
+        } catch (Exception e) {
+            log.errorf("Failed to serialize group_emails_json for user %s: %s", user.getUsername(), e.getMessage());
+        }
+
+        // Cleanup old attributes (making sure we don't delete our new JSON attribute)
         user.getAttributes().keySet().stream()
-            .filter(attr -> attr.startsWith("group_email_"))
+            .filter(attr -> attr.startsWith("group_email_") && !attr.equals("group_emails_json"))
             .filter(attr -> !processedAttributes.contains(attr))
             .forEach(user::removeAttribute);
     }
@@ -302,6 +339,66 @@ public class ScoutnetProfileSync {
         List<String> roleList = new ArrayList<>(roleSet);
         Collections.sort(roleList);
         return roleList;
+    }
+
+    private String buildDefinitionsJson(Profile profile) {
+        Map<String, Object> definitions = new LinkedHashMap<>();
+
+        if (profile.getMemberships() != null && profile.getMemberships().getGroup() != null) {
+            Map<String, String> groupNames = new LinkedHashMap<>();
+            Map<String, String> troopNames = new LinkedHashMap<>();
+            for (Map.Entry<String, GroupMembership> entry : profile.getMemberships().getGroup().entrySet()) {
+                Group group = entry.getValue().getGroup();
+                if (group != null && group.getName() != null) {
+                    groupNames.put(entry.getKey(), group.getName());
+                }
+                Troop troop = entry.getValue().getTroop();
+                if (troop != null && troop.getName() != null) {
+                    troopNames.put(String.valueOf(troop.getId()), troop.getName());
+                }
+            }
+            if (!groupNames.isEmpty()) definitions.put("groups", groupNames);
+            if (!troopNames.isEmpty()) definitions.put("troops", troopNames);
+        }
+
+        if (profile.getRoleSummary() != null) {
+            Map<String, String> roleNames = new LinkedHashMap<>();
+            for (RoleSummaryEntry entry : profile.getRoleSummary().values()) {
+                if (entry.getRoleKey() != null && entry.getRoleName() != null) {
+                    roleNames.put(entry.getRoleKey(), entry.getRoleName());
+                }
+            }
+            if (!roleNames.isEmpty()) definitions.put("roles", roleNames);
+        }
+
+        if (definitions.isEmpty()) return null;
+        try {
+            return OBJECT_MAPPER.writeValueAsString(definitions);
+        } catch (Exception e) {
+            log.warnf("Could not serialize definitions JSON: %s", e.getMessage());
+            return null;
+        }
+    }
+
+    private String buildTroopsJson(Map<String, GroupMembership> groups) {
+        List<Map<String, Object>> troops = new ArrayList<>();
+        for (Map.Entry<String, GroupMembership> entry : groups.entrySet()) {
+            Troop troop = entry.getValue().getTroop();
+            if (troop != null) {
+                Map<String, Object> t = new LinkedHashMap<>();
+                t.put("id", troop.getId());
+                t.put("name", troop.getName());
+                t.put("group_no", entry.getKey());
+                troops.add(t);
+            }
+        }
+        if (troops.isEmpty()) return null;
+        try {
+            return OBJECT_MAPPER.writeValueAsString(troops);
+        } catch (Exception e) {
+            log.warnf("Could not serialize troops JSON: %s", e.getMessage());
+            return null;
+        }
     }
 
     private static String getProviderVersion() {
