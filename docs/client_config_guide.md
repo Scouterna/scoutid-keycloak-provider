@@ -14,19 +14,7 @@ Systemet möjliggör för Scouternas olika tjänster att använda samma inloggni
 
 ## Tillgängliga ScoutID-attribut
 
-När `scoutnet`-scopet är konfigurerat (se [provider-repositoryt](https://github.com/Scouterna/scoutid-keycloak-provider) för importinstruktioner) får klienter tillgång till följande claims:
-
-| Claim | Typ | Beskrivning |
-|-------|-----|-------------|
-| `scoutnet_member_no` | String | Scoutnet-medlemsnummer |
-| `birthdate` | String | Födelsedatum (YYYY-MM-DD) |
-| `scoutnet_primary_group_name` | String | Namn på primär scoutkår |
-| `scoutnet_primary_group_no` | String | ID för primär scoutkår |
-| `scoutnet_roles` | String[] | Roller i formatet `typ:typId:rollnyckel` (t.ex. `group:766:it_manager`) |
-| `scoutnet_troops` | JSON | Avdelningar: `[{"id":17443,"name":"Yggdrasil","group_no":"766"}]` |
-| `scoutnet_definitions` | JSON | Definitionstabell för ID:n och nycklar till läsbara namn: `{"groups":{"766":"Mälarscouterna"},"troops":{"17443":"Yggdrasil"},"roles":{"it_manager":"IT Manager"}}` |
-| `scouterna_email` | String | Scouterna.se e-postadress (om tillgänglig) |
-| `picture` | String | URL till profilbild |
+När `scoutnet`-scopet är konfigurerat (se [provider-repositoryt](https://github.com/Scouterna/scoutid-keycloak-provider) för importinstruktioner) får klienter tillgång till claims på formatet som framgår i [access_token_example.json](config_support/access_token_example.json) och [id_token_example.json](config_support/id_token_example.json).
 
 Klienter som behöver ScoutID-data lägger till `scoutnet`-scopet under **Clients** → klient → **Client scopes** → **Add client scope**.
 
