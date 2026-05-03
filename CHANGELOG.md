@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.12.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.11.0...v0.12.0) (2026-05-03)
+
+
+### Features
+
+* add scoutnet field definitions and custom scope instructions ([150ea36](https://github.com/Scouterna/scoutid-keycloak-provider/commit/150ea360a5b06c35fd2663895a2dc13a6d998c51))
+
+
+### Documentation
+
+* remove duplicated/contradictory info ([fd68390](https://github.com/Scouterna/scoutid-keycloak-provider/commit/fd683907ae68fd212d7f0c4cd1b78bfa0be9056a))
+
 ## [0.11.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.10.0...v0.11.0) (2026-03-30)
 
 
