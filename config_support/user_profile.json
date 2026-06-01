@@ -4,22 +4,14 @@
       "name": "username",
       "displayName": "${username}",
       "validations": {
-        "length": {
-          "min": 3,
-          "max": 255
-        },
+        "length": { "min": 3, "max": 255 },
         "username-prohibited-characters": {},
         "up-username-not-idn-homograph": {}
       },
       "annotations": {},
       "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
+        "view": ["admin", "user"],
+        "edit": ["admin"]
       },
       "multivalued": false
     },
@@ -28,24 +20,13 @@
       "displayName": "${email}",
       "validations": {
         "email": {},
-        "length": {
-          "max": 255
-        }
+        "length": { "max": 255 }
       },
       "annotations": {},
-      "required": {
-        "roles": [
-          "user"
-        ]
-      },
+      "required": { "roles": ["user"] },
       "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
+        "view": ["admin", "user"],
+        "edit": ["admin"]
       },
       "multivalued": false
     },
@@ -53,25 +34,14 @@
       "name": "firstName",
       "displayName": "${firstName}",
       "validations": {
-        "length": {
-          "max": 255
-        },
+        "length": { "max": 255 },
         "person-name-prohibited-characters": {}
       },
       "annotations": {},
-      "required": {
-        "roles": [
-          "user"
-        ]
-      },
+      "required": { "roles": ["user"] },
       "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
+        "view": ["admin", "user"],
+        "edit": ["admin"]
       },
       "multivalued": false
     },
@@ -79,25 +49,14 @@
       "name": "lastName",
       "displayName": "${lastName}",
       "validations": {
-        "length": {
-          "max": 255
-        },
+        "length": { "max": 255 },
         "person-name-prohibited-characters": {}
       },
       "annotations": {},
-      "required": {
-        "roles": [
-          "user"
-        ]
-      },
+      "required": { "roles": ["user"] },
       "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
+        "view": ["admin", "user"],
+        "edit": ["admin"]
       },
       "multivalued": false
     },
@@ -107,121 +66,106 @@
       "validations": {},
       "annotations": {},
       "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
+        "view": ["admin", "user"],
+        "edit": ["admin"]
       },
       "multivalued": false
-    },
-    {
-      "name": "scoutnet_primary_group_name",
-      "displayName": "Primär scoutkår",
-      "validations": {},
-      "annotations": {},
-      "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
-      },
-      "multivalued": false
-    },
-    {
-      "name": "scoutnet_primary_group_no",
-      "displayName": "Primär scoutkår - ID",
-      "validations": {},
-      "annotations": {},
-      "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
-      },
-      "multivalued": false
-    },
-    {
-      "name": "roles",
-      "displayName": "Roles",
-      "validations": {},
-      "annotations": {
-        "inputType": "textarea"
-      },
-      "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
-      },
-      "multivalued": true
     },
     {
       "name": "scouterna_email",
       "displayName": "Scouterna e-post",
       "validations": {
         "email": {},
-        "length": {
-          "max": 255
-        }
+        "length": { "max": 255 }
       },
       "annotations": {},
       "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
+        "view": ["admin", "user"],
+        "edit": ["admin"]
       },
       "multivalued": false
     },
     {
-      "name": "scoutid_local_email",
-      "displayName": "ScoutID local email",
+      "name": "alt_email",
+      "displayName": "Alternativ e-post",
       "validations": {
         "email": {},
-        "length": {
-          "max": 255
-        }
+        "length": { "max": 255 }
       },
       "annotations": {},
       "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
+        "view": ["admin", "user"],
+        "edit": ["admin"]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "phone_number",
+      "displayName": "Mobilnummer",
+      "validations": {},
+      "annotations": {},
+      "permissions": {
+        "view": ["admin", "user"],
+        "edit": ["admin"]
       },
       "multivalued": false
     },
     {
       "name": "picture",
-      "displayName": "Profile picture",
+      "displayName": "Profilbild",
       "validations": {},
       "annotations": {},
       "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
+        "view": ["admin", "user"],
+        "edit": ["admin"]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "primary_group_name",
+      "displayName": "Primär scoutkår",
+      "validations": {},
+      "annotations": {},
+      "permissions": {
+        "view": ["admin", "user"],
+        "edit": ["admin"]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "primary_group_no",
+      "displayName": "Primär scoutkår - ID",
+      "validations": {},
+      "annotations": {},
+      "permissions": {
+        "view": ["admin", "user"],
+        "edit": ["admin"]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "memberships",
+      "displayName": "Medlemskap och roller",
+      "validations": {},
+      "annotations": {
+        "inputType": "textarea"
+      },
+      "permissions": {
+        "view": ["admin", "user"],
+        "edit": ["admin"]
+      },
+      "multivalued": false
+    },
+    {
+      "name": "group_emails_json",
+      "displayName": "Kåre-postadresser",
+      "validations": {},
+      "annotations": {
+        "inputType": "textarea"
+      },
+      "permissions": {
+        "view": ["admin", "user"],
+        "edit": ["admin"]
       },
       "multivalued": false
     },
@@ -231,49 +175,8 @@
       "validations": {},
       "annotations": {},
       "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
-      },
-      "multivalued": false
-    },
-    {
-      "name": "scoutnet_troops",
-      "displayName": "Avdelningar",
-      "validations": {},
-      "annotations": {
-        "inputType": "textarea"
-      },
-      "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
-      },
-      "multivalued": false
-    },
-    {
-      "name": "scoutnet_definitions",
-      "displayName": "Definitioner (grupper, avdelningar, roller)",
-      "validations": {},
-      "annotations": {
-        "inputType": "textarea"
-      },
-      "permissions": {
-        "view": [
-          "admin",
-          "user"
-        ],
-        "edit": [
-          "admin"
-        ]
+        "view": ["admin", "user"],
+        "edit": ["admin"]
       },
       "multivalued": false
     }

@@ -27,6 +27,8 @@ public class Profile {
     private Map<String, Map<String, Object>> contactInfo;
     @JsonProperty("avatar_url")
     private String avatarUrl;
+    @JsonProperty("language")
+    private String language;
     @JsonProperty("role_summary")
     private Map<String, RoleSummaryEntry> roleSummary;
 
@@ -51,6 +53,8 @@ public class Profile {
     public void setContactInfo(Map<String, Map<String, Object>> contactInfo) { this.contactInfo = contactInfo; }
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public String getLanguage() { return language; }
+    public void setLanguage(String language) { this.language = language; }
     public Map<String, RoleSummaryEntry> getRoleSummary() { return roleSummary; }
     public void setRoleSummary(Map<String, RoleSummaryEntry> roleSummary) { this.roleSummary = roleSummary; }
     
@@ -73,13 +77,13 @@ public class Profile {
     public String getScouternaEmail() {
         return getContactInfoByKey("scouterna-email");
     }
-    
-    /**
-     * Generates a fake local email address for systems that require email mapping
-     * Format: memberno@scoutid.local (e.g., 3169207@scoutid.local)
-     */
-    public String getScoutIdLocalEmail() {
-        return memberNo + "@scoutid.local";
+
+    public String getMobilePhone() {
+        return getContactInfoByKey("mobile_phone");
+    }
+
+    public String getAltEmail() {
+        return getContactInfoByKey("alt_email");
     }
     
     /**
