@@ -14,9 +14,16 @@ Systemet möjliggör för Scouternas olika tjänster att använda samma inloggni
 
 ## Tillgängliga ScoutID-attribut
 
-När `scoutnet`-scopet är konfigurerat (se [provider-repositoryt](https://github.com/Scouterna/scoutid-keycloak-provider) för importinstruktioner) får klienter tillgång till claims på formatet som framgår i [access_token_example.json](config_support/access_token_example.json) och [id_token_example.json](config_support/id_token_example.json).
+ScoutID utökar de standardiserade OIDC-scopesen `profile`, `email` och `phone` med Scout-specifika claims, och tillhandahåller ett eget scope `scoutnet-memberships` för organisations- och rolldata. Formatet framgår i [access_token_example.json](/config_support/access_token_example.json) och [id_token_example.json](/config_support/id_token_example.json).
 
-Klienter som behöver ScoutID-data lägger till `scoutnet`-scopet under **Clients** → klient → **Client scopes** → **Add client scope**.
+| Scope | Claims |
+|-------|--------|
+| `profile` | `name`, `given_name`, `family_name`, `picture`, `birthdate`, `locale`, `scoutnet_member_no` |
+| `email` | `email`, `email_verified`, `scouterna_email`, `alt_email` |
+| `phone` | `phone_number` |
+| `scoutnet-memberships` | `primary_group_name`, `primary_group_no`, `memberships`, `group_emails_json` |
+
+Klienter som behöver organisationsdata lägger till `scoutnet-memberships` under **Clients** → klient → **Client scopes** → **Add client scope**.
 
 ## Autentisering och auktorisering
 

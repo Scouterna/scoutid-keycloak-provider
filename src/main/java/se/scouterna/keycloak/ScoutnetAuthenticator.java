@@ -93,7 +93,7 @@ public class ScoutnetAuthenticator implements Authenticator {
         Profile profile = fetchResult.getProfile();
 
         // Step 3: Find or create the Keycloak user
-        String keycloakUsername = "scoutnet|" + profile.getMemberNo();
+        String keycloakUsername = "scoutnet-" + profile.getMemberNo();
         UserModel user = KeycloakModelUtils.findUserByNameOrEmail(context.getSession(), context.getRealm(), keycloakUsername);
 
         if (user == null) {
