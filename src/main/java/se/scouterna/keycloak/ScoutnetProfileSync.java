@@ -218,6 +218,17 @@ public class ScoutnetProfileSync {
             }
         }
 
+        // Always include all structural fields so integrators see a consistent shape
+        memberships.setGroups(new LinkedHashMap<>());
+        memberships.setTroops(new LinkedHashMap<>());
+        memberships.setPatrols(new LinkedHashMap<>());
+        memberships.setOrganisations(new LinkedHashMap<>());
+        memberships.setRegions(new LinkedHashMap<>());
+        memberships.setDistricts(new LinkedHashMap<>());
+        memberships.setCorps(new LinkedHashMap<>());
+        memberships.setNetworks(new LinkedHashMap<>());
+        memberships.setProjects(new LinkedHashMap<>());
+
         // Groups
         if (profile.getMemberships() != null && profile.getMemberships().getGroup() != null) {
             Map<String, GroupEntry> groupEntries = new LinkedHashMap<>();
@@ -257,7 +268,7 @@ public class ScoutnetProfileSync {
     private static Map<String, NamedRoleEntry> buildNamedRoleEntries(
             Map<String, Map<String, String>> rolesForType, Map<String, String> nameMap,
             Map<String, Integer> groupIdMap) {
-        if (rolesForType == null || rolesForType.isEmpty()) return null;
+        if (rolesForType == null || rolesForType.isEmpty()) return new LinkedHashMap<>();
         Map<String, NamedRoleEntry> result = new LinkedHashMap<>();
         for (Map.Entry<String, Map<String, String>> entry : rolesForType.entrySet()) {
             String entityId = entry.getKey();
@@ -267,19 +278,19 @@ public class ScoutnetProfileSync {
             namedEntry.setRoles(buildRoleItems(entry.getValue(), Collections.emptyMap(), false));
             result.put(entityId, namedEntry);
         }
-        return result.isEmpty() ? null : result;
+        return result;
     }
 
     private static Map<String, RoleEntry> buildSimpleRoleEntries(
             Map<String, Map<String, String>> rolesForType) {
-        if (rolesForType == null || rolesForType.isEmpty()) return null;
+        if (rolesForType == null || rolesForType.isEmpty()) return new LinkedHashMap<>();
         Map<String, RoleEntry> result = new LinkedHashMap<>();
         for (Map.Entry<String, Map<String, String>> entry : rolesForType.entrySet()) {
             RoleEntry roleEntry = new RoleEntry();
             roleEntry.setRoles(buildRoleItems(entry.getValue(), Collections.emptyMap(), false));
             result.put(entry.getKey(), roleEntry);
         }
-        return result.isEmpty() ? null : result;
+        return result;
     }
 
     private static List<RoleItem> buildRoleItems(Map<String, String> rolesMap,

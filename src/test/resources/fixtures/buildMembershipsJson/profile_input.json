@@ -1,0 +1,63 @@
+{
+  "member_no": 9876543,
+  "first_name": "Teo",
+  "last_name": "Leader",
+  "email": "teo.leader@ms.example.com",
+  "dob": "1970-01-01",
+  "sex": "1",
+  "language": "sv",
+  "avatar_url": "https://scoutnet.se/user_avatar/123456/auth_key/036de1af/avatar.png",
+  "memberships": {
+    "group": {
+      "999": {
+        "is_primary": true,
+        "group": {
+          "name": "Scoukåren Mälarscouterna",
+          "group_no": 999
+        },
+        "troop": {
+          "name": "Yggdrasil",
+          "id": 12345
+        },
+        "patrol": {
+          "name": "Vargarna",
+          "id": 9001
+        },
+        "roles": {
+          "136": "it_manager",
+          "302": "group_committee_2",
+          "121": "nomination_committee",
+          "98": "recruitment_responsible"
+        }
+      },
+      "000": {
+        "is_primary": false,
+        "group": {
+          "name": "Föreningen för Frustunaby",
+          "group_no": 0
+        },
+        "troop": null,
+        "patrol": null,
+        "roles": {}
+      }
+    }
+  },
+  "role_summary": {
+    "136": {
+      "role_key": "it_manager",
+      "role_name": "IT Manager"
+    },
+    "302": {
+      "role_key": "group_committee_2",
+      "role_name": "Grupp2"
+    },
+    "121": {
+      "role_key": "nomination_committee",
+      "role_name": "Nomination committee"
+    },
+    "98": {
+      "role_key": "recruitment_responsible",
+      "role_name": "recruitment_responsible"
+    }
+  }
+}
