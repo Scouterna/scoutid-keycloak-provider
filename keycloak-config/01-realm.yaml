@@ -1,0 +1,181 @@
+realm: master
+enabled: true
+
+# Token and session lifetimes
+accessTokenLifespan: 300          # 5 minutes
+ssoSessionIdleTimeout: 2592000    # 30 days
+ssoSessionMaxLifespan: 2592000    # 30 days
+
+# Theme
+loginTheme: scoutid
+adminTheme: keycloak.v2
+
+# Login settings
+registrationAllowed: false
+resetPasswordAllowed: false
+rememberMe: true
+loginWithEmailAllowed: false
+registrationEmailAsUsername: false
+duplicateEmailsAllowed: true
+verifyEmail: false
+editUsernameAllowed: false
+
+attributes:
+  userProfileEnabled: "true"
+
+userProfile:
+  groups:
+    - name: basic
+      displayHeader: Grunduppgifter
+    - name: contact
+      displayHeader: Kontaktuppgifter
+    - name: scout
+      displayHeader: Scoutuppgifter
+
+  attributes:
+    - name: username
+      displayName: ${username}
+      group: basic
+      validations:
+        length:
+          min: 3
+          max: 255
+        username-prohibited-characters: {}
+        up-username-not-idn-homograph: {}
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: email
+      displayName: ${email}
+      group: basic
+      validations:
+        email: {}
+        length:
+          max: 255
+      required:
+        roles: [user]
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: firstName
+      displayName: ${firstName}
+      group: basic
+      validations:
+        length:
+          max: 255
+        person-name-prohibited-characters: {}
+      required:
+        roles: [user]
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: lastName
+      displayName: ${lastName}
+      group: basic
+      validations:
+        length:
+          max: 255
+        person-name-prohibited-characters: {}
+      required:
+        roles: [user]
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: birthdate
+      displayName: Födelsedatum
+      group: basic
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: locale
+      displayName: Språk
+      group: basic
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: scouterna_email
+      displayName: Scouterna e-post
+      group: contact
+      validations:
+        email: {}
+        length:
+          max: 255
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: alt_email
+      displayName: Alternativ e-post
+      group: contact
+      validations:
+        email: {}
+        length:
+          max: 255
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: phone_number
+      displayName: Mobilnummer
+      group: contact
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: picture
+      displayName: Profilbild
+      group: basic
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: scoutnet_member_no
+      displayName: Medlemsnummer
+      group: scout
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: primary_group_name
+      displayName: Primär scoutkår
+      group: scout
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: primary_group_no
+      displayName: Primär scoutkår - ID
+      group: scout
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: memberships
+      displayName: Medlemskap och roller
+      group: scout
+      annotations:
+        inputType: textarea
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: group_emails_json
+      displayName: Kåre-postadresser
+      group: scout
+      annotations:
+        inputType: textarea
+      permissions:
+        view: [admin, user]
+        edit: [admin]
+
+    - name: firstlast
+      displayName: first.last
+      permissions:
+        view: [admin]
+        edit: [admin]

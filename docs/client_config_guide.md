@@ -67,8 +67,7 @@ Tryck **Next**.
 - **Client authentication**: On
 - **Authorization**: Off
 Lämna övriga orörda. Tryck **Next**.
--**Root URL** https://accounts.google.com
--**Root URL** https://accounts.google.com
+- **Root URL**: `https://accounts.google.com`
 Lämna övriga tills vidare. Tryck **Next**. Öppna upp din nya klient. Gå till **Credentials** och kopiera Client Secret.
 
 **I Google Admin Console:**
@@ -240,17 +239,15 @@ För att sätta upp en egen lokal testmiljö för att testa din klient mot, se i
 **Lokal testmiljö:**
 1. Klona repositoryt och följ README-instruktionerna
 2. Starta med `docker compose up`
-3. **Admin-konsol**: https://localhost:8080/admin/
-4. **Test-inloggning**: https://localhost:8080/realms/master/account/
-5. **Inloggning**: admin/admin (för admin-konsolen)
+3. **Admin-konsol**: http://localhost:8080/admin/ (admin/admin)
+4. **Test-inloggning**: http://localhost:8080/realms/master/account/
 
 ### Testkonfiguration
 
-För att testa din klientkonfiguration:
+En förkonfigurerad testklient (`scout-test-client`) sätts upp automatiskt av `docker compose up`. För att testa din klientkonfiguration:
 
-1. **Skapa en testklient** i admin-gränssnittet
-2. **Konfigurera endpoints** enligt instruktionerna för din applikationstyp
-3. **Testa inloggning** med ditt Scoutnet-konto (personnummer + lösenord)
-4. **Verifiera claims** genom att kontrollera vilken användarinformation som returneras
+1. **Konfigurera endpoints** enligt instruktionerna för din applikationstyp
+2. **Testa inloggning** med ditt Scoutnet-konto (personnummer + lösenord)
+3. **Verifiera claims** genom att kontrollera vilken användarinformation som returneras
 
 För detaljerade instruktioner om konfiguration av autentiseringsflöden och användarprofiler, se README-filen i provider-repositoryt.

@@ -1,0 +1,114 @@
+realm: master
+
+clientScopes:
+  # Extend the standard profile scope with scoutnet_member_no
+  - name: profile
+    protocol: openid-connect
+    protocolMappers:
+      - name: scoutnet_member_no
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        config:
+          user.attribute: scoutnet_member_no
+          claim.name: scoutnet_member_no
+          jsonType.label: String
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+
+  # Extend the standard email scope with scouterna_email and alt_email
+  - name: email
+    protocol: openid-connect
+    protocolMappers:
+      - name: scouterna_email
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        config:
+          user.attribute: scouterna_email
+          claim.name: scouterna_email
+          jsonType.label: String
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+      - name: alt_email
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        config:
+          user.attribute: alt_email
+          claim.name: alt_email
+          jsonType.label: String
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+
+  # Extend the standard phone scope with phone_number
+  - name: phone
+    protocol: openid-connect
+    protocolMappers:
+      - name: phone_number
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        config:
+          user.attribute: phone_number
+          claim.name: phone_number
+          jsonType.label: String
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+
+  # Custom scope for organisational membership data
+  - name: scoutnet-memberships
+    description: "Scout group memberships, roles, and organisational data"
+    protocol: openid-connect
+    attributes:
+      include.in.token.scope: "true"
+      display.on.consent.screen: "true"
+    protocolMappers:
+      - name: primary_group_name
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        config:
+          user.attribute: primary_group_name
+          claim.name: primary_group_name
+          jsonType.label: String
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+      - name: primary_group_no
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        config:
+          user.attribute: primary_group_no
+          claim.name: primary_group_no
+          jsonType.label: String
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+      - name: memberships
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        config:
+          user.attribute: memberships
+          claim.name: memberships
+          jsonType.label: JSON
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+      - name: group_emails_json
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        config:
+          user.attribute: group_emails_json
+          claim.name: group_emails_json
+          jsonType.label: JSON
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"

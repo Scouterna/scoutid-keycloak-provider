@@ -39,30 +39,25 @@ docker compose down
 ```
 
 ## Compiling the provider package
-run `./mvnw clean package`
 
-Add the jar-file produced in `target/` to the `providers/` directory of the
-Keycloak server and restart it
+```bash
+./mvnw clean package
+```
+
+The local Docker setup picks up the jar automatically via the volume mount in `docker-compose.yml`. For a standalone Keycloak deployment, copy the jar from `target/` to the `providers/` directory and restart Keycloak.
 
 ## Using the scoutnet based custom authentication
-1. Login to your development keycloak instance using credentials admin:admin
-2. Go to Authentication, make a duplicate of the browser flow name with name and description "ScoutID browser login"
-3. Remove Cookie, Kerberos, Identity Provider Redirector and ScoutID browser login forms
-4. Add execution and choose **Scoutnet Cookie Re-authenticator**. Set it to Alternative
-   - By pressing the settings gear, it is possible to change fetch-interval, which specifies how often we need to refetch the profile from Scoutnet to ensure fresh data. We can setup multiple authentication flows to apply different settings, for example high security applications where accesses need to be checked more often. Set to 0 to always fetch fresh data on every cookie-based login (disables caching, increases Scoutnet API load). Default: 60 minutes.
-5. Add execution and choose **Scoutnet Password Authenticator**. Set it to Alternative
-6. Make sure the Cookie Re-authenticator is **above** the Password Authenticator (drag to reorder if needed)
-7. Choose action -> Bind flow and bind it to the Browser flow. Now it's the new default login method
-8. Go to Clients -> security-admin-console -> Advanced -> Authentication flow overrides and set Browser Flow to browser. Save. Otherwise it will now be impossible to login to the keycloak admin interface.
 
-The Cookie Re-authenticator validates the Keycloak SSO cookie and uses a stored persistent Scoutnet token to fetch fresh profile data on every session resumption. If the cookie is invalid or no token is stored, it falls through to the Password Authenticator which shows the login form.
+`docker compose up` will start Keycloak and automatically apply all configuration via [keycloak-config-cli](https://github.com/adorsys/keycloak-config-cli). This sets up the ScoutID authentication flow, all client scopes with mappers, and a local test client — no manual steps needed.
 
-You can now verify login using this test interface
-http://localhost:8080/realms/master/account
+You can verify login at http://localhost:8080/realms/master/account once Keycloak is ready. The admin console at http://localhost:8080/admin/ keeps its own flow override so admin/admin still works there.
 
-In order to see our custom fields, you need to make them visible, and also include them in oidc response.
-1. Go to Realm settings -> User profile -> JSON editor and replace the json with the content of config_support/user_profile.json
-2. Set up the client scopes below to make ScoutID attributes available as OIDC claims.
+The configuration is split by concern under `keycloak-config/`:
+- `realm.yaml` — token lifetimes and login settings
+- `authentication.yaml` — ScoutID browser flow (Cookie Re-authenticator → Password Authenticator)
+- `scopes.yaml` — client scope definitions with all mappers
+- `clients.yaml` — local test client (`scout-test-client`)
+
 
 ### Claim overview
 
@@ -90,82 +85,27 @@ Each role is `{"id": <int>, "key": "<string>", "name": "<string>"}`. Display nam
 
 See config_support/access_token_example.json for a full example.
 
-### Setting up client scopes
-
-ScoutID uses the standard `profile`, `email`, and `phone` scopes (extended with Scout-specific claims) plus one custom scope: `scoutnet-memberships`.
-
-#### Extending the `profile` scope
-
-Go to **Client scopes** → `profile` → **Mappers** → **Configure a new mapper** → **User Attribute** and add:
-
-| Name | User Attribute | Token Claim Name | Claim JSON Type |
-|------|---------------|-----------------|-----------------|
-| scoutnet_member_no | `scoutnet_member_no` | `scoutnet_member_no` | String |
-
-#### Extending the `email` scope
-
-Go to **Client scopes** → `email` → **Mappers** → **Configure a new mapper** → **User Attribute** and add:
-
-| Name | User Attribute | Token Claim Name | Claim JSON Type |
-|------|---------------|-----------------|-----------------|
-| scouterna_email | `scouterna_email` | `scouterna_email` | String |
-| alt_email | `alt_email` | `alt_email` | String |
-
-#### Extending the `phone` scope
-
-Go to **Client scopes** → `phone` → **Mappers** → **Configure a new mapper** → **User Attribute** and add:
-
-| Name | User Attribute | Token Claim Name | Claim JSON Type |
-|------|---------------|-----------------|-----------------|
-| phone_number | `phone_number` | `phone_number` | String |
-
-#### Creating the `scoutnet-memberships` scope
-
-1. Go to **Client scopes** → **Create client scope**
-2. Name: `scoutnet-memberships`, Protocol: `OpenID Connect`, Type: `Optional`
-3. Click **Save**
-
-Go to the new scope → **Mappers** → **Configure a new mapper** → **User Attribute** and add:
-
-| Name | User Attribute | Token Claim Name | Claim JSON Type |
-|------|---------------|-----------------|-----------------|
-| primary_group_name | `primary_group_name` | `primary_group_name` | String |
-| primary_group_no | `primary_group_no` | `primary_group_no` | String |
-| memberships | `memberships` | `memberships` | JSON |
-| group_emails_json | `group_emails_json` | `group_emails_json` | JSON |
-
-For all mappers in all scopes above, enable: **Add to ID token**, **Add to access token**, **Add to userinfo**, and **Add to token introspection**.
-
-To see an example token with all scopes, look at config_support/access_token_example.json and config_support/id_token_example.json.
-
-**Adding `scoutnet-memberships` to a client:**
-
-1. Go to **Clients** → your client → **Client scopes**
-2. Click **Add client scope** → select `scoutnet-memberships` → **Add** as Default or Optional
-
-When Optional, the client requests it with `scope=openid scoutnet-memberships`.
-
-### Enabling the ScoutID theme
-Go into Realm settings, enter tab Theme and choose ScoutID.
-
 ### Using scoutid as sub
-For some client applications, a known sub is needed to prepopulate members before they are created by keycloak, or for compatibility with other login methods. The sub is the unique user id used by OIDC, by default created when a user is initialised in keycloak. Note that using scoutnet member number as sub can cause problems when using a combined login method (upcoming feature). If you want to use the scoutnet member id as sub:
-1. Create the client
-2. Under client scopes enter [client_name]-dedicated to change client specific default scope
-3. Add mapper -> By configuration -> User attribute
-4. Set as below:
-Mapper type: User Attribute
-Name: sub member_no mapper
-User Attribute: scoutnet_member_no
-Token Claim Name: sub
-Claim JSON Type: String
-Add to ID token: On
-Add to access token: On
-Add to lightweight access token: On
-Add to userinfo: On
-Add to token introspection: On
-Multivalued: Off
-Aggregate attribute values: Off
+
+For some clients a predictable `sub` is needed — for example to pre-populate members before first login, or for compatibility with other login methods. Note that this can cause problems if you later want to support combined login methods.
+
+1. Go to **Clients** → your client → **Client scopes** → `[client-name]-dedicated`
+2. **Configure a new mapper** → **User Attribute** and set:
+
+| Field | Value |
+|-------|-------|
+| Mapper type | User Attribute |
+| Name | `sub member_no mapper` |
+| User Attribute | `scoutnet_member_no` |
+| Token Claim Name | `sub` |
+| Claim JSON Type | String |
+| Add to ID token | On |
+| Add to access token | On |
+| Add to lightweight access token | On |
+| Add to userinfo | On |
+| Add to token introspection | On |
+| Multivalued | Off |
+| Aggregate attribute values | Off |
 
 ## Debugging and Development
 
@@ -196,21 +136,17 @@ Aggregate attribute values: Off
    docker compose up
    ```
    Then test login at: http://localhost:8080/realms/master/account
-   using username: admin, password: admin
-
-   If this is your first time running the docker container, you need to follow the [above setup instructions](#using-the-scoutnet-based-custom-authentication) first.
 
 4. **Check Keycloak logs** for correlation IDs and error details:
    ```bash
    docker compose logs -f keycloak
    ```
 
-5. **Enable debug logging** for the ScoutID provider by keeping uncommented in `docker-compose.yml`:
+5. **Enable debug logging** for the ScoutID provider via `KC_LOG_LEVEL` in `docker-compose.yml`:
    ```yaml
-   environment:
-     KC_LOG_LEVEL: INFO,se.scouterna.keycloak:DEBUG
+   KC_LOG_LEVEL: INFO,se.scouterna.keycloak:DEBUG
    ```
-   This enables DEBUG only for the ScoutID provider while keeping Keycloak's own logging at INFO. To enable full Keycloak debug logging, use `KC_LOG_LEVEL: DEBUG` (very verbose).
+   This is the default — DEBUG only for the ScoutID provider, INFO for everything else. For full Keycloak debug logging use `KC_LOG_LEVEL: DEBUG` (very verbose).
 
    At **INFO** level (default), you will see: login success/failure, first-time user creation, and profile data updates.
    At **DEBUG** level, you will additionally see: cookie validation details, fetch throttle decisions with timestamps, remember-me status, profile hash comparisons, and token storage events.

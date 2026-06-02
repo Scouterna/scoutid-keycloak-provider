@@ -1,0 +1,36 @@
+realm: master
+
+clients:
+  # Account console needs access to all scopes to show custom attributes
+  - clientId: account
+    defaultClientScopes:
+      - profile
+      - email
+      - phone
+      - scoutnet-memberships
+
+  # Keep the admin console on the built-in browser flow so admin login still works
+  - clientId: security-admin-console
+    authenticationFlowBindingOverrides:
+      browser: browser
+    attributes:
+      login_theme: keycloak.v2
+
+  - clientId: scout-test-client
+    name: Scout Test Client
+    description: "Local development client for testing ScoutID login"
+    enabled: true
+    publicClient: true
+    standardFlowEnabled: true
+    directAccessGrantsEnabled: false
+    redirectUris:
+      - "http://localhost:*"
+      - "https://localhost:*"
+    webOrigins:
+      - "+"
+    consentRequired: true
+    defaultClientScopes:
+      - profile
+      - email
+      - phone
+      - scoutnet-memberships

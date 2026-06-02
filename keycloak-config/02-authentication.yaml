@@ -1,0 +1,25 @@
+realm: master
+
+authenticationFlows:
+  - alias: "ScoutID browser login"
+    description: "ScoutID browser login flow"
+    providerId: basic-flow
+    topLevel: true
+    builtIn: false
+    authenticationExecutions:
+      - authenticatorFlow: false
+        authenticator: scoutnet-cookie-authenticator
+        requirement: ALTERNATIVE
+        priority: 10
+        authenticatorConfig: scoutid-cookie-config
+      - authenticatorFlow: false
+        authenticator: scoutnet-authenticator
+        requirement: ALTERNATIVE
+        priority: 20
+
+authenticatorConfig:
+  - alias: scoutid-cookie-config
+    config:
+      scoutnet.fetch.interval.minutes: "60"
+
+browserFlow: "ScoutID browser login"
