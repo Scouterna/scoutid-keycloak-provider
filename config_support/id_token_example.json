@@ -14,7 +14,7 @@
   "acr": "1",
   "scope": "openid profile email phone scoutnet-memberships",
 
-  "preferred_username": "scoutnet-9876543",
+  "preferred_username": "scoutnet|9876543",
 
   "name": "Teo Leader",
   "given_name": "Teo",

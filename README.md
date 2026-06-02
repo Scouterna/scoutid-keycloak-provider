@@ -63,7 +63,7 @@ The configuration is split by concern under `keycloak-config/`:
 
 | Scope | Claims |
 |-------|--------|
-| `openid` | `sub`, `preferred_username` (`scoutnet-<member_no>`) |
+| `openid` | `sub`, `preferred_username` (`scoutnet|<member_no>`) |
 | `profile` | `name`, `given_name`, `family_name`, `picture`, `birthdate`, `locale`, `scoutnet_member_no` |
 | `email` | `email`, `email_verified`, `scouterna_email`, `alt_email` |
 | `phone` | `phone_number` |
