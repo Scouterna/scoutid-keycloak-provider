@@ -5,7 +5,6 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_LOG_LEVEL: INFO,se.scouterna.keycloak:DEBUG
-      # Certificate and key for HTTPS
       KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/conf/certs/keycloak.key.pem
       KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/conf/certs/keycloak.cert.pem
       SCOUTNET_BASE_URL: https://scoutnet.se
@@ -18,7 +17,28 @@ services:
     volumes:
       - keycloak_data:/opt/keycloak/data
       - ./certs:/opt/keycloak/conf/certs:ro
-      - ./target/keycloak-scoutnet-authenticator-0.11.1-SNAPSHOT.jar:/opt/keycloak/providers/keycloak-scoutnet-authenticator.jar
+      - ./target/keycloak-scoutnet-authenticator-0.12.1-SNAPSHOT.jar:/opt/keycloak/providers/keycloak-scoutnet-authenticator.jar
       - ./keycloak-theme-for-kc-all-other-versions.jar:/opt/keycloak/providers/keycloak-theme-for-all-other-versions.jar
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /realms/master HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && timeout 2 cat <&3 | head -1 | grep -q '200 OK'"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+
+  keycloak-config:
+    image: adorsys/keycloak-config-cli:latest-26
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+      KEYCLOAK_AVAILABILITYCHECK_ENABLED: "false"
+      IMPORT_FILES_LOCATIONS: /config/*
+    volumes:
+      - ./keycloak-config:/config:ro
+
 volumes:
   keycloak_data:
