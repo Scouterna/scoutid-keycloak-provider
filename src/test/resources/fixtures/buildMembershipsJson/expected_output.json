@@ -1,0 +1,47 @@
+{
+  "groups": {
+    "999": {
+      "name": "Scoukåren Mälarscouterna",
+      "is_primary": true,
+      "roles": [
+        {"id": 302, "key": "group_committee_2", "name": "Grupp2"},
+        {"id": 136, "key": "it_manager", "name": "IT Manager"},
+        {"id": 121, "key": "nomination_committee", "name": "Nomination committee"},
+        {"id": 98, "key": "recruitment_responsible", "name": "recruitment_responsible"}
+      ]
+    },
+    "000": {
+      "name": "Föreningen för Frustunaby",
+      "is_primary": false,
+      "roles": []
+    }
+  },
+  "troops": {
+    "12345": {
+      "name": "Yggdrasil",
+      "groupId": 999,
+      "roles": [{"id": 4, "key": "vice_leader"}]
+    },
+    "12346": {
+      "groupId": null,
+      "roles": [{"id": 11, "key": "leader"}]
+    }
+  },
+  "patrols": {
+    "9001": {
+      "name": "Vargarna",
+      "groupId": 999,
+      "roles": [{"id": 7, "key": "patrol_leader"}]
+    }
+  },
+  "organisations": {
+    "111": {
+      "roles": [{"id": 68, "key": "board_member"}]
+    }
+  },
+  "regions": {},
+  "districts": {},
+  "corps": {},
+  "networks": {},
+  "projects": {}
+}

@@ -1,0 +1,33 @@
+{
+  "organisation": {
+    "111": {
+      "68": "board_member"
+    }
+  },
+  "region": {},
+  "project": {},
+  "network": {},
+  "corps": {},
+  "district": {},
+  "group": {
+    "999": {
+      "136": "it_manager",
+      "302": "group_committee_2",
+      "121": "nomination_committee",
+      "98": "recruitment_responsible"
+    }
+  },
+  "troop": {
+    "12345": {
+      "4": "vice_leader"
+    },
+    "12346": {
+      "11": "leader"
+    }
+  },
+  "patrol": {
+    "9001": {
+      "7": "patrol_leader"
+    }
+  }
+}
