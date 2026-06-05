@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.13.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.12.0...v0.13.0) (2026-06-05)
+
+
+### Features
+
+* automate local Keycloak setup with keycloak-config-cli ([7bb9cf0](https://github.com/Scouterna/scoutid-keycloak-provider/commit/7bb9cf08656be676638d9685931b25cdd8e38fba))
+* redesign scopes and introduce structured memberships claim ([007344b](https://github.com/Scouterna/scoutid-keycloak-provider/commit/007344bb1e993b1152db41fc245a76a176a86cf5))
+
+
+### Bug Fixes
+
+* restore scoutnet| format for now ([e8c85c1](https://github.com/Scouterna/scoutid-keycloak-provider/commit/e8c85c1725bd9bd0cc636f1546402d173a5614d1))
+
 ## [0.12.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.11.0...v0.12.0) (2026-05-03)
 
 
