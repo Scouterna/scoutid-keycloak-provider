@@ -10,6 +10,14 @@ ssoSessionMaxLifespan: 2592000    # 30 days
 loginTheme: scoutid
 adminTheme: keycloak.v2
 
+# Internationalization — without this block Keycloak only serves the default locale
+# and ignores ui_locales/Accept-Language, even though the theme ships en + sv.
+internationalizationEnabled: true
+supportedLocales:
+  - sv
+  - en
+defaultLocale: sv
+
 # Login settings
 registrationAllowed: false
 resetPasswordAllowed: false
