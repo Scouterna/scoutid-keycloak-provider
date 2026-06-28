@@ -1,3 +1,8 @@
+# LOCAL DEV/TEST SETUP ONLY
+# Production configuration lives in scoutid-keycloak-infra and uses a dedicated realm.
+# This file includes clients for local development (scout-test-client) and integration
+# testing (scout-it-client). Neither should be deployed to production as-is.
+
 realm: master
 
 clients:
@@ -29,6 +34,21 @@ clients:
     webOrigins:
       - "+"
     consentRequired: true
+    defaultClientScopes:
+      - profile
+      - email
+      - phone
+      - scoutnet-memberships
+
+  - clientId: scout-it-client
+    name: Scout IT Client
+    description: "Integration test client for verifying token claims — not for production use"
+    enabled: true
+    publicClient: true
+    standardFlowEnabled: false
+    directAccessGrantsEnabled: true
+    authenticationFlowBindingOverrides:
+      direct_grant: "ScoutID direct grant"
     defaultClientScopes:
       - profile
       - email

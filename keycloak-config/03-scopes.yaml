@@ -1,10 +1,95 @@
+# LOCAL DEV/TEST SETUP ONLY
+# Production configuration lives in scoutid-keycloak-infra and uses a dedicated realm.
+# This file configures the master realm for local development and integration testing.
+# The scope and mapper definitions here ARE the reference for what claims ScoutID exposes;
+# prod config in scoutid-keycloak-infra should mirror them.
+
 realm: master
 
 clientScopes:
-  # Extend the standard profile scope with scoutnet_member_no
+  # Extend the standard profile scope with scoutnet_member_no.
+  # keycloak-config-cli replaces all protocolMappers on existing scopes (import.managed=full),
+  # so we must re-declare all standard Keycloak profile mappers that the provider populates.
   - name: profile
     protocol: openid-connect
     protocolMappers:
+      # Standard Keycloak profile mappers (provider sets firstName, lastName, username)
+      - name: username
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-property-mapper
+        config:
+          user.attribute: username
+          claim.name: preferred_username
+          jsonType.label: String
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+      - name: given name
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-property-mapper
+        config:
+          user.attribute: firstName
+          claim.name: given_name
+          jsonType.label: String
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+      - name: family name
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-property-mapper
+        config:
+          user.attribute: lastName
+          claim.name: family_name
+          jsonType.label: String
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+      - name: full name
+        protocol: openid-connect
+        protocolMapper: oidc-full-name-mapper
+        config:
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+      # Standard attribute mappers (provider sets picture, birthdate, locale)
+      - name: picture
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        config:
+          user.attribute: picture
+          claim.name: picture
+          jsonType.label: String
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+      - name: birthdate
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        config:
+          user.attribute: birthdate
+          claim.name: birthdate
+          jsonType.label: String
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+      - name: locale
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        config:
+          user.attribute: locale
+          claim.name: locale
+          jsonType.label: String
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+      # Custom ScoutID extension
       - name: scoutnet_member_no
         protocol: openid-connect
         protocolMapper: oidc-usermodel-attribute-mapper
@@ -17,10 +102,35 @@ clientScopes:
           userinfo.token.claim: "true"
           introspection.token.claim: "true"
 
-  # Extend the standard email scope with scouterna_email and alt_email
+  # Extend the standard email scope with scouterna_email and alt_email.
+  # Must re-declare standard email mappers for the same reason as profile above.
   - name: email
     protocol: openid-connect
     protocolMappers:
+      # Standard Keycloak email mappers (provider sets email and emailVerified)
+      - name: email
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-property-mapper
+        config:
+          user.attribute: email
+          claim.name: email
+          jsonType.label: String
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+      - name: email verified
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-property-mapper
+        config:
+          user.attribute: emailVerified
+          claim.name: email_verified
+          jsonType.label: boolean
+          id.token.claim: "true"
+          access.token.claim: "true"
+          userinfo.token.claim: "true"
+          introspection.token.claim: "true"
+      # Custom ScoutID extensions
       - name: scouterna_email
         protocol: openid-connect
         protocolMapper: oidc-usermodel-attribute-mapper
@@ -44,11 +154,14 @@ clientScopes:
           userinfo.token.claim: "true"
           introspection.token.claim: "true"
 
-  # Extend the standard phone scope with phone_number
+  # Replace the standard phone scope.
+  # `phone_number` is an OIDC standard claim (OpenID Connect Core §5.1.2). Keycloak's default
+  # phone scope deviates by mapping the `phoneNumber` (camelCase) user attribute. ScoutID
+  # stores it as `phone_number` to match the name from scoutnet, so we replace the default mapper.
   - name: phone
     protocol: openid-connect
     protocolMappers:
-      - name: phone_number
+      - name: phone number
         protocol: openid-connect
         protocolMapper: oidc-usermodel-attribute-mapper
         config:
