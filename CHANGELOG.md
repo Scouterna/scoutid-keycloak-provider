@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.1](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.13.0...v0.13.1) (2026-07-10)
+
+
+### Bug Fixes
+
+* **keycloak-config:** enable internationalization in example realm.yaml ([0ce25aa](https://github.com/Scouterna/scoutid-keycloak-provider/commit/0ce25aa027c264822328bfe15d76b689dc406e40))
+
 ## [0.13.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.12.0...v0.13.0) (2026-06-05)
 
 
