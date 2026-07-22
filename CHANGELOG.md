@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.2](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.13.1...v0.13.2) (2026-07-22)
+
+
+### Bug Fixes
+
+* cap memberships JSON to Keycloak's 2048-char attribute limit ([8ac1fb7](https://github.com/Scouterna/scoutid-keycloak-provider/commit/8ac1fb703050380098cc4212079c007caf0dea0c))
+
 ## [0.13.1](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.13.0...v0.13.1) (2026-07-10)
 
 
