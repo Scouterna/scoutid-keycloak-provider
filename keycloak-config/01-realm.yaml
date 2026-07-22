@@ -1,3 +1,7 @@
+# LOCAL DEV/TEST SETUP ONLY
+# Production configuration lives in scoutid-keycloak-infra and uses a dedicated realm.
+# This file configures the master realm for local development and integration testing.
+
 realm: master
 enabled: true
 

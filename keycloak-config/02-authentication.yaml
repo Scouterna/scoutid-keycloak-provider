@@ -1,3 +1,7 @@
+# LOCAL DEV/TEST SETUP ONLY
+# Production configuration lives in scoutid-keycloak-infra and uses a dedicated realm.
+# This file configures the master realm for local development and integration testing.
+
 realm: master
 
 authenticationFlows:
@@ -16,6 +20,19 @@ authenticationFlows:
         authenticator: scoutnet-authenticator
         requirement: ALTERNATIVE
         priority: 20
+
+  # Integration test support only — not bound to any production client.
+  # Enables ROPC (direct grant) so KeycloakClaimsIT can obtain tokens without a browser.
+  - alias: "ScoutID direct grant"
+    description: "ScoutID direct grant flow for ROPC — integration tests only"
+    providerId: basic-flow
+    topLevel: true
+    builtIn: false
+    authenticationExecutions:
+      - authenticatorFlow: false
+        authenticator: scoutnet-authenticator
+        requirement: REQUIRED
+        priority: 10
 
 authenticatorConfig:
   - alias: scoutid-cookie-config
