@@ -33,6 +33,8 @@ public class ScoutnetProfileSync {
         .configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true);
     private static final String PROVIDER_VERSION = getProviderVersion();
     private static final List<String> TRACKED_ATTRIBUTES = Arrays.asList("domain");
+    // Keycloak's default USER_ATTRIBUTE.VALUE column is VARCHAR(2048); values beyond this get truncated/rejected.
+    private static final int KEYCLOAK_ATTRIBUTE_MAX_LENGTH = 2048;
 
     private final ScoutnetClient scoutnetClient;
     private final ScoutnetGroupManager groupManager;
@@ -227,7 +229,7 @@ public class ScoutnetProfileSync {
         memberships.setDistricts(new LinkedHashMap<>());
         memberships.setCorps(new LinkedHashMap<>());
         memberships.setNetworks(new LinkedHashMap<>());
-        memberships.setProjects(new LinkedHashMap<>());
+        // memberships.setProjects(new LinkedHashMap<>()); // Disabled: see ScoutnetMemberships.projects
 
         // Groups
         if (profile.getMemberships() != null && profile.getMemberships().getGroup() != null) {
@@ -254,11 +256,20 @@ public class ScoutnetProfileSync {
             memberships.setDistricts(buildSimpleRoleEntries(roles.getDistrict()));
             memberships.setCorps(buildSimpleRoleEntries(roles.getCorps()));
             memberships.setNetworks(buildSimpleRoleEntries(roles.getNetwork()));
-            memberships.setProjects(buildSimpleRoleEntries(roles.getProject()));
+            // memberships.setProjects(buildSimpleRoleEntries(roles.getProject())); // Disabled: see ScoutnetMemberships.projects
         }
 
         try {
-            return OBJECT_MAPPER.writeValueAsString(memberships);
+            String json = OBJECT_MAPPER.writeValueAsString(memberships);
+            if (json.length() > KEYCLOAK_ATTRIBUTE_MAX_LENGTH) {
+                log.warnf("Serialized memberships JSON is %d chars, exceeds Keycloak's %d attribute limit; "
+                        + "falling back to groups-only payload", json.length(), KEYCLOAK_ATTRIBUTE_MAX_LENGTH);
+                ScoutnetMemberships fallback = new ScoutnetMemberships();
+                fallback.setGroups(memberships.getGroups());
+                fallback.setError("memberships_truncated: payload exceeded " + KEYCLOAK_ATTRIBUTE_MAX_LENGTH + " chars");
+                json = OBJECT_MAPPER.writeValueAsString(fallback);
+            }
+            return json;
         } catch (Exception e) {
             log.warnf("Could not serialize memberships: %s", e.getMessage());
             return null;

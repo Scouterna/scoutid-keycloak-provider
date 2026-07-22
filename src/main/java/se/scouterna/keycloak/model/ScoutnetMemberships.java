@@ -17,7 +17,9 @@ public class ScoutnetMemberships {
     private Map<String, RoleEntry> districts;
     private Map<String, RoleEntry> corps;
     private Map<String, RoleEntry> networks;
-    private Map<String, RoleEntry> projects;
+    // Disabled: projects can push the serialized JSON past Keycloak's 2048-char attribute limit.
+    // private Map<String, RoleEntry> projects;
+    private String error;
 
     public Map<String, GroupEntry> getGroups() { return groups; }
     public void setGroups(Map<String, GroupEntry> groups) { this.groups = groups; }
@@ -35,8 +37,10 @@ public class ScoutnetMemberships {
     public void setCorps(Map<String, RoleEntry> corps) { this.corps = corps; }
     public Map<String, RoleEntry> getNetworks() { return networks; }
     public void setNetworks(Map<String, RoleEntry> networks) { this.networks = networks; }
-    public Map<String, RoleEntry> getProjects() { return projects; }
-    public void setProjects(Map<String, RoleEntry> projects) { this.projects = projects; }
+    // public Map<String, RoleEntry> getProjects() { return projects; }
+    // public void setProjects(Map<String, RoleEntry> projects) { this.projects = projects; }
+    public String getError() { return error; }
+    public void setError(String error) { this.error = error; }
 
     // --- Nested types ---
 
