@@ -4,10 +4,15 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import se.scouterna.keycloak.client.dto.Group;
+import se.scouterna.keycloak.client.dto.GroupMembership;
+import se.scouterna.keycloak.client.dto.Memberships;
 import se.scouterna.keycloak.client.dto.Profile;
 import se.scouterna.keycloak.client.dto.Roles;
 
 import java.io.InputStream;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -60,7 +65,7 @@ class ScoutnetProfileSyncTest {
         assertTrue(root.has("districts"), "districts should always be present");
         assertTrue(root.has("corps"), "corps should always be present");
         assertTrue(root.has("networks"), "networks should always be present");
-        assertTrue(root.has("projects"), "projects should always be present");
+        assertFalse(root.has("projects"), "projects is currently disabled, see ScoutnetMemberships.projects");
         assertTrue(root.path("troops").isEmpty(), "troops should be empty when roles is null");
     }
 
@@ -132,5 +137,42 @@ class ScoutnetProfileSyncTest {
         assertNull(roles.getTroop(),    "troop: [] should deserialize as null");
         assertNull(roles.getPatrol(),   "patrol: [] should deserialize as null");
         assertNotNull(roles.getGroup(), "non-empty group map should still deserialize");
+    }
+
+    @Test
+    void buildMembershipsJson_oversizedPayload_fallsBackToGroupsOnlyWithError() throws Exception {
+        Profile profile = new Profile();
+        Memberships memberships = new Memberships();
+        Map<String, GroupMembership> groupMap = new LinkedHashMap<>();
+        GroupMembership membership = new GroupMembership();
+        membership.setPrimary(true);
+        Group group = new Group();
+        group.setName("Scoutkåren Mälarscouterna");
+        group.setGroupNo(999);
+        membership.setGroup(group);
+        groupMap.put("999", membership);
+        memberships.setGroup(groupMap);
+        profile.setMemberships(memberships);
+
+        // A large organisation-roles map, unrelated to groups, that alone pushes the payload past 2048 chars.
+        Roles roles = new Roles();
+        Map<String, Map<String, String>> organisation = new LinkedHashMap<>();
+        for (int i = 0; i < 60; i++) {
+            Map<String, String> orgRoles = new LinkedHashMap<>();
+            orgRoles.put(String.valueOf(1000 + i), "board_member_role_" + i);
+            organisation.put(String.valueOf(i), orgRoles);
+        }
+        roles.setOrganisation(organisation);
+
+        String result = ScoutnetProfileSync.buildMembershipsJson(profile, roles);
+        assertNotNull(result);
+        assertTrue(result.length() <= 2048, "fallback payload should fit within the Keycloak attribute limit");
+        JsonNode root = MAPPER.readTree(result);
+        assertTrue(root.has("groups"), "groups should still be present in the fallback payload");
+        assertEquals(1, root.path("groups").size());
+        assertTrue(root.has("error"), "error marker should be present when falling back");
+        assertFalse(root.has("organisations"), "non-group fields should be dropped in the fallback payload");
+        assertFalse(root.has("troops"));
+        assertFalse(root.has("projects"));
     }
 }
