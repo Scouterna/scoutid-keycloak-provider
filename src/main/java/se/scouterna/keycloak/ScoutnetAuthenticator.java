@@ -36,8 +36,14 @@ public class ScoutnetAuthenticator implements Authenticator {
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
-        log.debug("Displaying login form for Scoutnet authentication.");
-        context.challenge(context.form().createLoginUsernamePassword());
+        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+        if (formData.containsKey("username") && formData.containsKey("password")) {
+            // Credentials already present (e.g. direct grant / ROPC) — authenticate immediately.
+            action(context);
+        } else {
+            log.debug("Displaying login form for Scoutnet authentication.");
+            context.challenge(context.form().createLoginUsernamePassword());
+        }
     }
 
     @Override

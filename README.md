@@ -53,10 +53,10 @@ The local Docker setup picks up the jar automatically via the volume mount in `d
 You can verify login at http://localhost:8080/realms/master/account once Keycloak is ready. The admin console at http://localhost:8080/admin/ keeps its own flow override so admin/admin still works there.
 
 The configuration is split by concern under `keycloak-config/`:
-- `realm.yaml` — token lifetimes and login settings
-- `authentication.yaml` — ScoutID browser flow (Cookie Re-authenticator → Password Authenticator)
-- `scopes.yaml` — client scope definitions with all mappers
-- `clients.yaml` — local test client (`scout-test-client`)
+- `01-realm.yaml` — token lifetimes and login settings
+- `02-authentication.yaml` — ScoutID browser flow (Cookie Re-authenticator → Password Authenticator) and a direct grant flow for integration tests
+- `03-scopes.yaml` — client scope definitions with all mappers (this is the canonical reference for what claims ScoutID exposes)
+- `04-clients.yaml` — local test client (`scout-test-client`) and integration test client (`scout-it-client`)
 
 
 ### Claim overview
@@ -65,9 +65,9 @@ The configuration is split by concern under `keycloak-config/`:
 |-------|--------|
 | `openid` | `sub`, `preferred_username` (`scoutnet|<member_no>`) |
 | `profile` | `name`, `given_name`, `family_name`, `picture`, `birthdate`, `locale`, `scoutnet_member_no` |
-| `email` | `email`, `email_verified`, `scouterna_email`, `alt_email` |
+| `email` | `email`, `email_verified`, `scouterna_email`, `alt_email` *(optional)* |
 | `phone` | `phone_number` |
-| `scoutnet-memberships` | `primary_group_name`, `primary_group_no`, `memberships`, `group_emails_json` |
+| `scoutnet-memberships` | `primary_group_name`, `primary_group_no`, `memberships`, `group_emails_json` *(optional)* |
 | *(stored, not exposed)* | `firstlast` (used to derive group email addresses), `scoutnet_profile_hash` (change detection) |
 
 #### The `memberships` claim
@@ -119,13 +119,13 @@ For some clients a predictable `sub` is needed — for example to pre-populate m
 
 2. **Run integration tests** to verify basic functionality:
    ```bash
-   # Set credentials and run tests
    export SCOUTNET_USERNAME=your-personnummer-or-email
    export SCOUTNET_PASSWORD=your-scoutnet-password
-   export SCOUTNET_BASE_URL=https://scoutnet.se # Optional, defaults to https://scoutnet.se
    ./mvnw verify
    ```
-   This will test the core authentication logic without requiring a full Keycloak setup.
+   This runs two sets of integration tests:
+   - `ScoutnetClientIT` — tests Scoutnet API authentication and profile fetch directly (no Keycloak needed)
+   - `KeycloakClaimsIT` — authenticates via a running local Keycloak and verifies all expected claims appear in the ID token (requires `docker compose up` first)
 
 3. **Test with full local Keycloak setup**:
    ```bash
