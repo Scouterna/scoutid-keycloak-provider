@@ -5,6 +5,7 @@
 </div>
 
 > [!TIP]
+> ScoutID documentation available at [ScoutID Wiki](https://github.com/Scouterna/scoutid-keycloak/wiki)
 > This repo is part of a family:
 > - [scoutid-keycloak](https://github.com/Scouterna/scoutid-keycloak)
 > - [scoutid-keycloak-provider](https://github.com/Scouterna/scoutid-keycloak-provider) (this repo)
