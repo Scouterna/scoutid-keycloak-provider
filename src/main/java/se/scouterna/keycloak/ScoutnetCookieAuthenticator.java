@@ -62,6 +62,14 @@ public class ScoutnetCookieAuthenticator implements Authenticator {
         boolean isRememberMe = authResult.session().isRememberMe();
         log.debugf("[%s] SSO cookie valid for user: %s (rememberMe=%s)", correlationId, user.getUsername(), isRememberMe);
 
+        // Migrate legacy username format scoutnet|<no> → <no>@scoutnet
+        String currentUsername = user.getUsername();
+        if (needsUsernameMigration(currentUsername)) {
+            String newUsername = migrateUsername(currentUsername);
+            log.infof("[%s] Migrating username from %s to %s", correlationId, currentUsername, newUsername);
+            user.setUsername(newUsername);
+        }
+
         // Step 2: Check if fetch is needed based on throttle interval
         int fetchIntervalMinutes = getFetchIntervalMinutes(context);
         String lastFetchStr = user.getFirstAttribute(LAST_FETCH_ATTRIBUTE);
@@ -161,6 +169,14 @@ public class ScoutnetCookieAuthenticator implements Authenticator {
         } catch (NumberFormatException e) {
             return true;
         }
+    }
+
+    boolean needsUsernameMigration(String username) {
+        return username != null && username.startsWith("scoutnet|");
+    }
+
+    String migrateUsername(String legacyUsername) {
+        return legacyUsername.substring("scoutnet|".length()) + "@scoutnet";
     }
 
     @Override

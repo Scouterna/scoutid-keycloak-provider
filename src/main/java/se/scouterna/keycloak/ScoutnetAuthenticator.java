@@ -99,13 +99,22 @@ public class ScoutnetAuthenticator implements Authenticator {
         Profile profile = fetchResult.getProfile();
 
         // Step 3: Find or create the Keycloak user
-        String keycloakUsername = "scoutnet|" + profile.getMemberNo();
+        String keycloakUsername = profile.getMemberNo() + "@scoutnet";
         UserModel user = KeycloakModelUtils.findUserByNameOrEmail(context.getSession(), context.getRealm(), keycloakUsername);
 
         if (user == null) {
-            log.infof("[%s] First time login for Scoutnet user: %d. Creating new Keycloak user: %s.", correlationId, profile.getMemberNo(), keycloakUsername);
-            user = context.getSession().users().addUser(context.getRealm(), keycloakUsername);
-            user.setEnabled(true);
+            // Migrate legacy username format scoutnet|<no> → <no>@scoutnet
+            String legacyUsername = "scoutnet|" + profile.getMemberNo();
+            UserModel legacyUser = KeycloakModelUtils.findUserByNameOrEmail(context.getSession(), context.getRealm(), legacyUsername);
+            if (legacyUser != null) {
+                log.infof("[%s] Migrating username from %s to %s", correlationId, legacyUsername, keycloakUsername);
+                legacyUser.setUsername(keycloakUsername);
+                user = legacyUser;
+            } else {
+                log.infof("[%s] First time login for Scoutnet user: %d. Creating new Keycloak user: %s.", correlationId, profile.getMemberNo(), keycloakUsername);
+                user = context.getSession().users().addUser(context.getRealm(), keycloakUsername);
+                user.setEnabled(true);
+            }
         } else {
             log.debugf("[%s] Found existing Keycloak user: %s, checking for profile updates.", correlationId, keycloakUsername);
         }

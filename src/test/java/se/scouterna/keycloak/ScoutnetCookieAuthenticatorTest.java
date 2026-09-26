@@ -5,8 +5,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for the pure logic in the cookie authenticator — fetch throttle
- * and related utility methods. These don't require mocking Keycloak.
+ * Tests for the pure logic in the cookie authenticator — fetch throttle,
+ * username migration detection, and related utility methods.
+ * These don't require mocking Keycloak.
  */
 class ScoutnetCookieAuthenticatorTest {
 
@@ -56,5 +57,25 @@ class ScoutnetCookieAuthenticatorTest {
     void fetchNeeded_whenOneMinuteIntervalAndOldFetch() {
         String twoMinutesAgo = String.valueOf(System.currentTimeMillis() - 120_000L);
         assertTrue(authenticator.isFetchNeeded(twoMinutesAgo, 1));
+    }
+
+    @Test
+    void needsMigration_legacyPipeFormat() {
+        assertTrue(authenticator.needsUsernameMigration("scoutnet|1234567"));
+    }
+
+    @Test
+    void needsMigration_alreadyMigrated() {
+        assertFalse(authenticator.needsUsernameMigration("1234567@scoutnet"));
+    }
+
+    @Test
+    void needsMigration_nullUsername() {
+        assertFalse(authenticator.needsUsernameMigration(null));
+    }
+
+    @Test
+    void migrateUsername_extractsMemberNo() {
+        assertEquals("1234567@scoutnet", authenticator.migrateUsername("scoutnet|1234567"));
     }
 }
