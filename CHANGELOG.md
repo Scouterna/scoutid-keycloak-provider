@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.14.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.13.2...v0.14.0) (2026-09-28)
+
+
+### Features
+
+* change preferred_username format to &lt;memberNo&gt;[@scoutnet](https://github.com/scoutnet) ([7b20543](https://github.com/Scouterna/scoutid-keycloak-provider/commit/7b20543a5889db1f1330eb6e73e4b1a6373a495a))
+
+
+### Bug Fixes
+
+* restore standard OIDC claims lost to keycloak-config-cli scope replacement ([75626bb](https://github.com/Scouterna/scoutid-keycloak-provider/commit/75626bb60fef1382ce2811cda0f3b856efb780fd))
+
 ## [0.13.2](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.13.1...v0.13.2) (2026-07-22)
 
 
