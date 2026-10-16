@@ -1,4 +1,5 @@
 # Persistent Scoutnet Tokens — Implementation Plan
+**This implementation plan suggests encrypted tokens in a way unsupported by Keycloak. It is not implemented as specified here.**
 
 ## Problem
 

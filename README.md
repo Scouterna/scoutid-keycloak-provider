@@ -5,12 +5,13 @@
 </div>
 
 > [!TIP]
-> ScoutID documentation available at [ScoutID Wiki](https://github.com/Scouterna/scoutid-keycloak/wiki).
+> ScoutID configuration documentation available at [ScoutID Wiki](https://github.com/Scouterna/scoutid-keycloak/wiki).
 >
 > This repo is part of a family:
 > - [scoutid-keycloak](https://github.com/Scouterna/scoutid-keycloak)
 > - [scoutid-keycloak-provider](https://github.com/Scouterna/scoutid-keycloak-provider) (this repo)
 > - [scoutid-keycloak-theme](https://github.com/Scouterna/scoutid-keycloak-theme)
+> - [scoutid-keycloak-helm](https://github.com/Scouterna/scoutid-keycloak-helm)
 > - [scoutid-keycloak-infra](https://github.com/Scouterna/scoutid-keycloak-infra) (private)
 
 This repository contains a custom provider for Keycloak to sign in with ScoutID,
@@ -21,32 +22,43 @@ If you want to setup a client, follow instructions in docs/client_config_guide.m
 ## Running a local Keycloak instance
 
 This repo contains a Docker Compose project to quickly spin up a local Keycloak
-instance. Make sure you've got Docker installed.
+instance. You can use this to try out ScoutID configurations for you project.
+This development docker compose configures the provider and theme correctly on
+the master realm, suitable for development and integration purposes.
+
+Make sure you've got Docker installed.
 
 ```bash
 # Generate certificates to run Keycloak in HTTPS mode. You should only need to do this once.
 ./generate-certs.sh
 
-# Fetch the ScoutID theme
+# Fetch the latest release of ScoutID theme
 curl -fsSL -o keycloak-theme-for-kc-all-other-versions.jar https://github.com/Scouterna/scoutid-keycloak-theme/releases/latest/download/keycloak-theme-for-kc-all-other-versions.jar
 
-# Start Keycloak
-docker compose up
+# Fetch the latest release of ScoutID provider
+export VERSION=$(curl -fsSLI -o /dev/null -w '%{url_effective}' \
+  https://github.com/Scouterna/scoutid-keycloak-provider/releases/latest \
+  | sed -E 's#.*/tag/v?##')
+curl -fsSL -o keycloak-scoutnet-authenticator.jar "https://github.com/Scouterna/scoutid-keycloak-provider/releases/latest/download/keycloak-scoutnet-authenticator-${VERSION}.jar"
 
-# If you want you can run it in the background (daemonized) using the -d flag
-docker compose up -d
+# Start Keycloak
+docker compose up # add -d to run in background (daemonized)
 
 # And to stop it if you're running it in the background
 docker compose down
 ```
 
-## Compiling the provider package
+Access the keycloak instance on localhost:8080 with default credentials (admin:admin).
 
+## Compiling the provider package
+To compile a new version of the provider based on your development, you need Maven installed. Then run:
 ```bash
 ./mvnw clean package
+# Maven outputs to the folder target, with a version.
+export PROVIDER_VERSION=$(./mvnw -q help:evaluate -Dexpression=project.version -DforceStdout)
+# Update docker compose file by changing from the release package to the development package
+docker compose up
 ```
-
-The local Docker setup picks up the jar automatically via the volume mount in `docker-compose.yml`. For a standalone Keycloak deployment, copy the jar from `target/` to the `providers/` directory and restart Keycloak.
 
 ## Using the scoutnet based custom authentication
 
@@ -89,7 +101,7 @@ See config_support/access_token_example.json for a full example.
 
 ### Using scoutid as sub
 
-For some clients a predictable `sub` is needed — for example to pre-populate members before first login, or for compatibility with other login methods. Note that this can cause problems if you later want to support combined login methods.
+For some clients a predictable `sub` is needed — for example to pre-populate members before first login, or for compatibility with other login methods.
 
 1. Go to **Clients** → your client → **Client scopes** → `[client-name]-dedicated`
 2. **Configure a new mapper** → **User Attribute** and set:

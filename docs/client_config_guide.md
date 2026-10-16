@@ -1,4 +1,5 @@
 # ScoutID Keycloak
+**Replaced by [ScoutID Wiki](https://github.com/Scouterna/scoutid-keycloak/wiki).**
 
 Denna instruktion riktar sig till dig som vill koppla in en klient på ScoutID.
 

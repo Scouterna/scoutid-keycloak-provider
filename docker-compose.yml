@@ -17,7 +17,10 @@ services:
     volumes:
       - keycloak_data:/opt/keycloak/data
       - ./certs:/opt/keycloak/conf/certs:ro
-      - ./target/keycloak-scoutnet-authenticator-0.12.1-SNAPSHOT.jar:/opt/keycloak/providers/keycloak-scoutnet-authenticator.jar
+      # Default: downloaded latest release (see README "Running a local Keycloak instance")
+      - ./keycloak-scoutnet-authenticator.jar:/opt/keycloak/providers/keycloak-scoutnet-authenticator.jar
+      # Uncomment instead to run your own compiled build. See README "Compiling the provider package").
+      # - ./target/keycloak-scoutnet-authenticator-${PROVIDER_VERSION}.jar:/opt/keycloak/providers/keycloak-scoutnet-authenticator.jar
       - ./keycloak-theme-for-kc-all-other-versions.jar:/opt/keycloak/providers/keycloak-theme-for-all-other-versions.jar
     healthcheck:
       test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /realms/master HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && timeout 2 cat <&3 | head -1 | grep -q '200 OK'"]
