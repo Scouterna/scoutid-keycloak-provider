@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.14.0...v1.0.0) (2026-10-23)
+
+
+### Documentation
+
+* make documentation consistent ([fe6014d](https://github.com/Scouterna/scoutid-keycloak-provider/commit/fe6014dd11936c1c7cd05b1f7a862231b8278b4d))
+
+
+### Miscellaneous Chores
+
+* release 1.0.0 ([4ba578f](https://github.com/Scouterna/scoutid-keycloak-provider/commit/4ba578f5a2f9b86ef8d07ec1afe8a053c0a724a0))
+
 ## [0.14.0](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v0.13.2...v0.14.0) (2026-09-28)
 
 
