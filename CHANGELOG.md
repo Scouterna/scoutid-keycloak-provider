@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v1.0.1...v1.0.2) (2026-11-10)
+
+
+### Bug Fixes
+
+* log Scoutnet's error reason from the err field ([f4c30ac](https://github.com/Scouterna/scoutid-keycloak-provider/commit/f4c30ac6933ca8d0cbc732970caf7ff4abf4f994))
+
 ## [1.0.1](https://github.com/Scouterna/scoutid-keycloak-provider/compare/v1.0.0...v1.0.1) (2026-10-23)
 
 
